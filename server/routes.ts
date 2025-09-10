@@ -9,6 +9,7 @@ import { queueService } from "./services/queueService";
 import { horoscopeService } from "./services/horoscopeService";
 import { horoscopeQueueService } from "./services/horoscopeQueueService";
 import { productionDbService } from "./services/productionDbService";
+import { premiumEmailService } from "./services/premiumEmailService";
 import { insertCampaignSchema, insertEmailConfigurationSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
