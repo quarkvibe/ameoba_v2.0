@@ -8,31 +8,41 @@
 
 import path from 'path';
 
-// Import astronomy calculation libraries
+// Import astronomy calculation libraries with ESM compatibility
 let Astronomy: any = null;
 let sweph: any = null;
 
-try {
-  // Try to import astronomy-engine for high-precision calculations
-  Astronomy = require('astronomy-engine');
-  console.log('✅ Astronomy Engine initialized successfully');
-} catch (error) {
-  console.warn('⚠️  Astronomy Engine not available:', error instanceof Error ? error.message : String(error));
+async function initializeAstronomyLibraries() {
+  try {
+    // Try to import astronomy-engine for high-precision calculations using dynamic import
+    const astronomyModule = await import('astronomy-engine');
+    Astronomy = astronomyModule.default || astronomyModule;
+    console.log('✅ Astronomy Engine initialized successfully');
+  } catch (error) {
+    console.warn('⚠️  Astronomy Engine not available:', error instanceof Error ? error.message : String(error));
+  }
+
+  try {
+    // Try to import Swiss Ephemeris if available using dynamic import
+    const swephModule = await import('sweph');
+    sweph = swephModule.default || swephModule;
+    const ephemerisPath = path.join(process.cwd(), 'ephemeris_data');
+    sweph.set_ephe_path(ephemerisPath);
+    console.log('✅ Swiss Ephemeris initialized successfully');
+    console.log('📁 Ephemeris path:', ephemerisPath);
+    console.log('📊 Swiss Ephemeris version:', sweph.version());
+  } catch (error) {
+    console.warn('⚠️  Swiss Ephemeris not available:', error instanceof Error ? error.message : String(error));
+  }
+
+  const method = sweph ? 'Swiss Ephemeris (High Precision)' : 
+                Astronomy ? 'Astronomy Engine (High Precision)' : 
+                'Mathematical Approximations (Basic)';
+  console.log('🔄 Using', method, 'for astronomical calculations');
 }
 
-try {
-  // Try to import Swiss Ephemeris if available
-  sweph = require('sweph');
-  const ephemerisPath = path.join(process.cwd(), 'ephemeris_data');
-  sweph.set_ephe_path(ephemerisPath);
-  console.log('✅ Swiss Ephemeris initialized successfully');
-  console.log('📁 Ephemeris path:', ephemerisPath);
-  console.log('📊 Swiss Ephemeris version:', sweph.version());
-} catch (error) {
-  console.warn('⚠️  Swiss Ephemeris not available:', error instanceof Error ? error.message : String(error));
-}
-
-console.log('🔄 Using', Astronomy ? 'Astronomy Engine' : 'mathematical approximations', 'for astronomical calculations');
+// Initialize libraries asynchronously
+const initPromise = initializeAstronomyLibraries();
 
 // Celestial body constants
 export const CELESTIAL_BODIES = {
@@ -128,7 +138,10 @@ export class AstronomyService {
 
   constructor() {
     this.isSwephAvailable = sweph !== null;
-    console.log(`🌟 Astronomy Service initialized with ${this.getCalculationMethod()}`);
+    // Wait for library initialization before logging
+    initPromise.then(() => {
+      console.log(`🌟 Astronomy Service initialized with ${this.getCalculationMethod()}`);
+    });
   }
 
   private getCalculationMethod(): string {
@@ -182,9 +195,10 @@ export class AstronomyService {
    * Calculate planetary positions for a given date
    */
   async calculatePlanetaryPositions(date: Date): Promise<PlanetPosition[]> {
-    const positions: PlanetPosition[] = [];
+    // Ensure libraries are initialized
+    await initPromise;
 
-    if (this.isSwephAvailable) {
+    if (sweph) {
       // Use Swiss Ephemeris for highest precision
       return this.calculateWithSwissEphemeris(date);
     } else if (Astronomy) {
@@ -502,7 +516,10 @@ export class AstronomyService {
    * Calculate lunar phase information
    */
   async calculateLunarPhase(date: Date): Promise<LunarPhase> {
-    if (this.isSwephAvailable) {
+    // Ensure libraries are initialized
+    await initPromise;
+    
+    if (sweph) {
       const julianDay = this.calculateJulianDay(date);
       
       try {
@@ -622,6 +639,9 @@ export class AstronomyService {
    */
   async getAstronomicalData(date: Date = new Date()): Promise<AstronomicalData> {
     try {
+      // Ensure libraries are initialized
+      await initPromise;
+      
       const julianDay = this.calculateJulianDay(date);
       const planetPositions = await this.calculatePlanetaryPositions(date);
       const aspects = await this.calculateAspects(planetPositions);
