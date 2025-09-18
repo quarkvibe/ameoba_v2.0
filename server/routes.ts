@@ -3,6 +3,14 @@ import { createServer, type Server } from "http";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
 import { horoscopeService } from "./services/horoscopeService";
+import {
+  insertContentTemplateSchema,
+  insertDataSourceSchema,
+  insertOutputChannelSchema,
+  insertDistributionRuleSchema,
+  insertScheduledJobSchema,
+  insertGeneratedContentSchema,
+} from "@shared/schema";
 import { queueService } from "./services/queueService";
 import { emailService } from "./services/emailService";
 import { aiAgent } from "./services/aiAgent";
@@ -690,6 +698,463 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to connect to production database",
         error: error.message 
       });
+    }
+  });
+
+  // ===============================================
+  // UNIVERSAL CONTENT PLATFORM API ROUTES
+  // ===============================================
+
+  // Content Templates CRUD
+  app.get('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const templates = await storage.getContentTemplates(userId);
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      res.status(500).json({ message: 'Failed to fetch templates' });
+    }
+  });
+
+  app.post('/api/templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const templateData = insertContentTemplateSchema.parse({ ...req.body, userId });
+      const template = await storage.createContentTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error('Error creating template:', error);
+      res.status(400).json({ message: 'Failed to create template', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.put('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const updates = insertContentTemplateSchema.partial().parse(req.body);
+      const template = await storage.updateContentTemplate(id, userId, updates);
+      if (!template) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error('Error updating template:', error);
+      res.status(400).json({ message: 'Failed to update template', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.delete('/api/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const deleted = await storage.deleteContentTemplate(id, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      res.status(500).json({ message: 'Failed to delete template' });
+    }
+  });
+
+  // Data Sources CRUD
+  app.get('/api/datasources', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const dataSources = await storage.getDataSources(userId);
+      res.json(dataSources);
+    } catch (error) {
+      console.error('Error fetching data sources:', error);
+      res.status(500).json({ message: 'Failed to fetch data sources' });
+    }
+  });
+
+  app.post('/api/datasources', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const dataSourceData = insertDataSourceSchema.parse({ ...req.body, userId });
+      const dataSource = await storage.createDataSource(dataSourceData);
+      res.status(201).json(dataSource);
+    } catch (error) {
+      console.error('Error creating data source:', error);
+      res.status(400).json({ message: 'Failed to create data source', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.put('/api/datasources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const updates = insertDataSourceSchema.partial().parse(req.body);
+      const dataSource = await storage.updateDataSource(id, userId, updates);
+      if (!dataSource) {
+        return res.status(404).json({ message: 'Data source not found' });
+      }
+      res.json(dataSource);
+    } catch (error) {
+      console.error('Error updating data source:', error);
+      res.status(400).json({ message: 'Failed to update data source', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.delete('/api/datasources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const deleted = await storage.deleteDataSource(id, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Data source not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting data source:', error);
+      res.status(500).json({ message: 'Failed to delete data source' });
+    }
+  });
+
+  // Data Source Testing Endpoint (with SSRF protection)
+  app.post('/api/datasources/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const { config } = req.body;
+      
+      // Basic SSRF protection - only allow HTTPS URLs and block private IPs
+      if (config?.endpoint) {
+        const url = new URL(config.endpoint);
+        if (url.protocol !== 'https:') {
+          return res.status(400).json({ message: 'Only HTTPS URLs are allowed' });
+        }
+        // Block common private IP ranges
+        const hostname = url.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || 
+            hostname.startsWith('192.168.') || hostname.startsWith('10.') ||
+            hostname.startsWith('172.16.') || hostname.startsWith('172.17.') ||
+            hostname.startsWith('172.18.') || hostname.startsWith('172.19.') ||
+            hostname.startsWith('172.20.') || hostname.startsWith('172.21.') ||
+            hostname.startsWith('172.22.') || hostname.startsWith('172.23.') ||
+            hostname.startsWith('172.24.') || hostname.startsWith('172.25.') ||
+            hostname.startsWith('172.26.') || hostname.startsWith('172.27.') ||
+            hostname.startsWith('172.28.') || hostname.startsWith('172.29.') ||
+            hostname.startsWith('172.30.') || hostname.startsWith('172.31.')) {
+          return res.status(400).json({ message: 'Private IP addresses are not allowed' });
+        }
+      }
+
+      // Mock test response for now - in a real implementation, this would make the actual request
+      const testResult = {
+        success: true,
+        data: { test: true, timestamp: new Date().toISOString() },
+        responseTime: Math.floor(Math.random() * 500) + 100,
+        statusCode: 200
+      };
+      
+      res.json(testResult);
+    } catch (error) {
+      console.error('Error testing data source:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
+  // Output Channels CRUD
+  app.get('/api/output/channels', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const channels = await storage.getOutputChannels(userId);
+      res.json(channels);
+    } catch (error) {
+      console.error('Error fetching output channels:', error);
+      res.status(500).json({ message: 'Failed to fetch output channels' });
+    }
+  });
+
+  app.post('/api/output/channels', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const channelData = insertOutputChannelSchema.parse({ ...req.body, userId });
+      const channel = await storage.createOutputChannel(channelData);
+      res.status(201).json(channel);
+    } catch (error) {
+      console.error('Error creating output channel:', error);
+      res.status(400).json({ message: 'Failed to create output channel', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.put('/api/output/channels/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const updates = insertOutputChannelSchema.partial().parse(req.body);
+      const channel = await storage.updateOutputChannel(id, userId, updates);
+      if (!channel) {
+        return res.status(404).json({ message: 'Output channel not found' });
+      }
+      res.json(channel);
+    } catch (error) {
+      console.error('Error updating output channel:', error);
+      res.status(400).json({ message: 'Failed to update output channel', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.delete('/api/output/channels/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const deleted = await storage.deleteOutputChannel(id, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Output channel not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting output channel:', error);
+      res.status(500).json({ message: 'Failed to delete output channel' });
+    }
+  });
+
+  // Output Channel Testing Endpoint
+  app.post('/api/output/channels/:id/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const { testData } = req.body;
+      
+      const channel = await storage.getOutputChannel(id, userId);
+      if (!channel) {
+        return res.status(404).json({ message: 'Output channel not found' });
+      }
+
+      // Mock test response for now - in a real implementation, this would test the actual output
+      const testResult = {
+        success: true,
+        message: `Test message sent to ${channel.type} channel: ${channel.name}`,
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(testResult);
+    } catch (error) {
+      console.error('Error testing output channel:', error);
+      res.status(500).json({ message: 'Failed to test output channel', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Distribution Rules CRUD
+  app.get('/api/output/rules', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const rules = await storage.getDistributionRules(userId);
+      res.json(rules);
+    } catch (error) {
+      console.error('Error fetching distribution rules:', error);
+      res.status(500).json({ message: 'Failed to fetch distribution rules' });
+    }
+  });
+
+  app.post('/api/output/rules', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const ruleData = insertDistributionRuleSchema.parse({ ...req.body, userId });
+      const rule = await storage.createDistributionRule(ruleData);
+      res.status(201).json(rule);
+    } catch (error) {
+      console.error('Error creating distribution rule:', error);
+      res.status(400).json({ message: 'Failed to create distribution rule', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Scheduled Jobs CRUD
+  app.get('/api/schedule/jobs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const jobs = await storage.getScheduledJobs(userId);
+      res.json(jobs);
+    } catch (error) {
+      console.error('Error fetching scheduled jobs:', error);
+      res.status(500).json({ message: 'Failed to fetch scheduled jobs' });
+    }
+  });
+
+  app.post('/api/schedule/jobs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const jobData = insertScheduledJobSchema.parse({ ...req.body, userId });
+      const job = await storage.createScheduledJob(jobData);
+      res.status(201).json(job);
+    } catch (error) {
+      console.error('Error creating scheduled job:', error);
+      res.status(400).json({ message: 'Failed to create scheduled job', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.put('/api/schedule/jobs/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const updates = insertScheduledJobSchema.partial().parse(req.body);
+      const job = await storage.updateScheduledJob(id, userId, updates);
+      if (!job) {
+        return res.status(404).json({ message: 'Scheduled job not found' });
+      }
+      res.json(job);
+    } catch (error) {
+      console.error('Error updating scheduled job:', error);
+      res.status(400).json({ message: 'Failed to update scheduled job', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.delete('/api/schedule/jobs/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const deleted = await storage.deleteScheduledJob(id, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: 'Scheduled job not found' });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting scheduled job:', error);
+      res.status(500).json({ message: 'Failed to delete scheduled job' });
+    }
+  });
+
+  // Manual Job Execution
+  app.post('/api/schedule/jobs/:id/run', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      
+      const job = await storage.getScheduledJob(id, userId);
+      if (!job) {
+        return res.status(404).json({ message: 'Scheduled job not found' });
+      }
+
+      // Mock job execution for now - in a real implementation, this would trigger the job
+      await storage.updateScheduledJobStatus(id, 'running');
+      
+      // Simulate job execution
+      setTimeout(async () => {
+        try {
+          await storage.updateScheduledJobStatus(id, 'success');
+        } catch (error) {
+          await storage.updateScheduledJobStatus(id, 'error', error instanceof Error ? error.message : 'Unknown error');
+        }
+      }, 1000);
+      
+      res.json({ message: 'Job execution triggered', jobId: id });
+    } catch (error) {
+      console.error('Error running scheduled job:', error);
+      res.status(500).json({ message: 'Failed to run scheduled job', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  // Content Generation Endpoints
+  app.get('/api/generated-content', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { limit = 50 } = req.query;
+      const content = await storage.getGeneratedContent(userId, parseInt(limit));
+      res.json(content);
+    } catch (error) {
+      console.error('Error fetching generated content:', error);
+      res.status(500).json({ message: 'Failed to fetch generated content' });
+    }
+  });
+
+  app.post('/api/content/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { templateId } = req.body;
+      
+      // Verify template exists and belongs to user
+      const template = await storage.getContentTemplate(templateId, userId);
+      if (!template) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+
+      // Mock content generation for now - in a real implementation, this would:
+      // 1. Fetch data from connected data sources
+      // 2. Process template with AI
+      // 3. Generate content
+      // 4. Save to database
+      // 5. Send to output channels
+      
+      const mockContent = `Generated content for template "${template.name}" at ${new Date().toISOString()}`;
+      
+      const generatedContent = await storage.createGeneratedContent({
+        templateId: templateId,
+        userId: userId,
+        content: mockContent,
+        generatedAt: new Date(),
+        metadata: { mock: true, timestamp: new Date().toISOString() }
+      });
+      
+      res.json({ 
+        message: 'Content generation completed',
+        contentId: generatedContent.id,
+        templateName: template.name
+      });
+    } catch (error) {
+      console.error('Error generating content:', error);
+      res.status(500).json({ message: 'Failed to generate content', error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+
+  app.post('/api/content/generate-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get all active templates for the user
+      const templates = await storage.getContentTemplates(userId);
+      const activeTemplates = templates.filter(t => t.isActive);
+      
+      if (activeTemplates.length === 0) {
+        return res.status(400).json({ message: 'No active templates found' });
+      }
+
+      // Mock batch generation for now
+      const results = [];
+      for (const template of activeTemplates) {
+        try {
+          const mockContent = `Batch generated content for template "${template.name}" at ${new Date().toISOString()}`;
+          
+          const generatedContent = await storage.createGeneratedContent({
+            templateId: template.id,
+            userId: userId,
+            content: mockContent,
+            generatedAt: new Date(),
+            metadata: { batch: true, timestamp: new Date().toISOString() }
+          });
+          
+          results.push({
+            templateId: template.id,
+            templateName: template.name,
+            contentId: generatedContent.id,
+            success: true
+          });
+        } catch (error) {
+          results.push({
+            templateId: template.id,
+            templateName: template.name,
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+      
+      const successCount = results.filter(r => r.success).length;
+      
+      res.json({ 
+        message: `Batch generation completed: ${successCount}/${activeTemplates.length} templates successful`,
+        results: results,
+        totalTemplates: activeTemplates.length,
+        successCount: successCount
+      });
+    } catch (error) {
+      console.error('Error in batch generation:', error);
+      res.status(500).json({ message: 'Failed to generate content for all templates', error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

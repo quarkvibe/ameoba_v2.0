@@ -9,7 +9,7 @@ import SystemStatus from "@/components/dashboard/SystemStatus";
 import HourlyChart from "@/components/dashboard/HourlyChart";
 import QueueStatus from "@/components/dashboard/QueueStatus";
 import FloatingActionMenu from "@/components/dashboard/FloatingActionMenu";
-import HoroscopeGeneration from "@/components/dashboard/HoroscopeGeneration";
+import ContentGeneration from "@/components/dashboard/ContentGeneration";
 import LogsViewer from "@/components/dashboard/LogsViewer";
 import FileManagement from "@/components/dashboard/FileManagement";
 import HealthMonitor from "@/components/dashboard/HealthMonitor";
@@ -50,7 +50,7 @@ export default function Dashboard() {
           </div>
         );
       case "generation":
-        return <HoroscopeGeneration />;
+        return <ContentGeneration />;
       case "content-config":
         return <ContentConfiguration />;
       case "data-sources":

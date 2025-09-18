@@ -13,32 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-
-interface ContentTemplate {
-  id: string;
-  name: string;
-  description: string;
-  aiPrompt: string;
-  dataSources: string[];
-  outputFormat: 'json' | 'text' | 'html' | 'markdown';
-  disseminationChannels: ('api' | 'email' | 'webhook')[];
-  schedule: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface DataSource {
-  id: string;
-  name: string;
-  type: 'api' | 'database' | 'file' | 'astronomy';
-  endpoint?: string;
-  apiKey?: string;
-  headers?: Record<string, string>;
-  queryParams?: Record<string, string>;
-  parsingRules?: string;
-  isActive: boolean;
-}
+import type { ContentTemplate, DataSource } from "@shared/schema";
 
 export default function ContentConfiguration() {
   const { toast } = useToast();
@@ -51,23 +26,23 @@ export default function ContentConfiguration() {
 
   // Get content templates
   const { data: templates, isLoading: templatesLoading } = useQuery<ContentTemplate[]>({
-    queryKey: ["/api/content/templates"],
+    queryKey: ["/api/templates"],
     refetchInterval: 30000,
   });
 
   // Get data sources
   const { data: dataSources, isLoading: dataSourcesLoading } = useQuery<DataSource[]>({
-    queryKey: ["/api/content/datasources"],
+    queryKey: ["/api/datasources"],
     refetchInterval: 30000,
   });
 
   // Template mutations
   const createTemplateMutation = useMutation({
     mutationFn: (template: Partial<ContentTemplate>) => 
-      apiRequest("POST", "/api/content/templates", template),
+      apiRequest("POST", "/api/templates", template),
     onSuccess: () => {
       toast({ title: "Success", description: "Content template created successfully." });
-      queryClient.invalidateQueries({ queryKey: ["/api/content/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
       setIsTemplateDialogOpen(false);
       setEditingTemplate(null);
     },
@@ -78,10 +53,10 @@ export default function ContentConfiguration() {
 
   const updateTemplateMutation = useMutation({
     mutationFn: ({ id, ...template }: Partial<ContentTemplate> & { id: string }) => 
-      apiRequest("PUT", `/api/content/templates/${id}`, template),
+      apiRequest("PUT", `/api/templates/${id}`, template),
     onSuccess: () => {
       toast({ title: "Success", description: "Content template updated successfully." });
-      queryClient.invalidateQueries({ queryKey: ["/api/content/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
       setIsTemplateDialogOpen(false);
       setEditingTemplate(null);
     },
@@ -91,10 +66,10 @@ export default function ContentConfiguration() {
   });
 
   const deleteTemplateMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("DELETE", `/api/content/templates/${id}`),
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/templates/${id}`),
     onSuccess: () => {
       toast({ title: "Success", description: "Content template deleted successfully." });
-      queryClient.invalidateQueries({ queryKey: ["/api/content/templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -104,10 +79,10 @@ export default function ContentConfiguration() {
   // Data source mutations
   const createDataSourceMutation = useMutation({
     mutationFn: (dataSource: Partial<DataSource>) => 
-      apiRequest("POST", "/api/content/datasources", dataSource),
+      apiRequest("POST", "/api/datasources", dataSource),
     onSuccess: () => {
       toast({ title: "Success", description: "Data source created successfully." });
-      queryClient.invalidateQueries({ queryKey: ["/api/content/datasources"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/datasources"] });
       setIsDataSourceDialogOpen(false);
       setEditingDataSource(null);
     },
@@ -123,11 +98,9 @@ export default function ContentConfiguration() {
     const templateData = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
+      category: formData.get('category') as string || 'general',
       aiPrompt: formData.get('aiPrompt') as string,
-      outputFormat: formData.get('outputFormat') as ContentTemplate['outputFormat'],
-      schedule: formData.get('schedule') as string,
-      dataSources: [],
-      disseminationChannels: ['api'] as ContentTemplate['disseminationChannels'],
+      outputFormat: formData.get('outputFormat') as string || 'text',
       isActive: formData.get('isActive') === 'on',
     };
 
@@ -154,7 +127,7 @@ export default function ContentConfiguration() {
   };
 
   const triggerGeneration = (templateId: string) => {
-    apiRequest("POST", `/api/content/generate/${templateId}`)
+    apiRequest("POST", "/api/content/generate", { templateId })
       .then(() => {
         toast({ title: "Success", description: "Content generation triggered successfully." });
       })
