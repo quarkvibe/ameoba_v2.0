@@ -257,9 +257,48 @@ export class AstronomyService {
     const positions: PlanetPosition[] = [];
     
     try {
-      // Geocentric observer (Earth center) for astrological calculations
-      const observer = new Astronomy.Observer(0, 0, 0);
-      const time = new Astronomy.AstroTime(date);
+      // Ensure Astronomy is available
+      if (!Astronomy) {
+        console.warn('Astronomy Engine not available, falling back to approximations');
+        return this.calculateWithApproximations(date);
+      }
+
+      // Create AstroTime more safely - use most compatible approach
+      let time;
+      let observer;
+      
+      try {
+        // Try the most robust approach for astronomy-engine
+        const julianDay = this.calculateJulianDay(date);
+        
+        // Create time object directly from Julian Day for better compatibility
+        if (Astronomy.MakeTime) {
+          time = Astronomy.MakeTime(date);
+        } else {
+          // Create a simple time object that should work with astronomy-engine
+          time = {
+            tt: julianDay,
+            ut: julianDay,
+            year: date.getFullYear(),
+            month: date.getMonth() + 1,
+            day: date.getDate(),
+            hour: date.getHours(),
+            minute: date.getMinutes(),
+            second: date.getSeconds()
+          };
+        }
+
+        // Create observer more safely 
+        if (Astronomy.Observer) {
+          observer = new Astronomy.Observer(0, 0, 0);
+        } else {
+          observer = { latitude: 0, longitude: 0, height: 0 };
+        }
+        
+      } catch (timeError) {
+        console.warn('Failed to create time/observer objects, falling back to approximations');
+        return this.calculateWithApproximations(date);
+      }
       
       const bodies = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
       
@@ -285,7 +324,7 @@ export class AstronomyService {
       
       return positions;
     } catch (error) {
-      console.warn('Astronomy Engine calculation failed, falling back to approximations');
+      console.warn('Astronomy Engine calculation failed, falling back to approximations:', error instanceof Error ? error.message : String(error));
       return this.calculateWithApproximations(date);
     }
   }
