@@ -131,8 +131,8 @@ export const systemConfigurations = pgTable("system_configurations", {
 
 // Zodiac signs reference table
 export const zodiacSigns = pgTable("zodiac_signs", {
-  id: integer("id").primaryKey(), // 1-12 for Aries to Pisces
-  name: varchar("name").notNull().unique(), // 'aries', 'taurus', etc.
+  id: varchar("id").primaryKey(), // 'aries', 'taurus', etc.
+  name: varchar("name").notNull().unique(), // 'Aries', 'Taurus', etc.
   // Simplified to core fields that exist in production database
   // Removed: symbol, element, quality, dateRange, traits
 });
@@ -140,7 +140,7 @@ export const zodiacSigns = pgTable("zodiac_signs", {
 // Daily horoscopes for each zodiac sign
 export const horoscopes = pgTable("horoscopes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  zodiacSignId: integer("zodiac_sign_id").references(() => zodiacSigns.id).notNull(),
+  zodiacSignId: varchar("zodiac_sign_id").references(() => zodiacSigns.id).notNull(),
   date: date("date").notNull(),
   content: text("content").notNull(), // generated horoscope text
   // Temporarily removed optional fields that don't exist in production:
@@ -153,7 +153,7 @@ export const horoscopes = pgTable("horoscopes", {
 export const userSunCharts = pgTable("user_sun_charts", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull().unique(),
-  zodiacSignId: integer("zodiac_sign_id").references(() => zodiacSigns.id).notNull(),
+  zodiacSignId: varchar("zodiac_sign_id").references(() => zodiacSigns.id).notNull(),
   birthDate: date("birth_date").notNull(),
   birthTime: varchar("birth_time"), // HH:MM format
   birthLocation: varchar("birth_location"), // city, country

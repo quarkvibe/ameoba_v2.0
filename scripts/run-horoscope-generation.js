@@ -162,8 +162,7 @@ Make it inspiring, specific, and 2-3 sentences long. Focus on love, career, and 
     const postData = JSON.stringify({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 150,
-      temperature: 0.7
+      max_completion_tokens: 150
     });
 
     const options = {

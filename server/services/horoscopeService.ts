@@ -160,8 +160,7 @@ Format as JSON:
           }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.8, // Some creativity for engaging content
-        max_tokens: 500
+        max_completion_tokens: 500
       });
 
       const result = JSON.parse(response.choices[0].message.content || '{}');
@@ -471,8 +470,7 @@ Generate a personalized daily horoscope (150-200 words) in JSON format:
         }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.8,
-      max_tokens: 500
+      max_completion_tokens: 500
     });
 
     return JSON.parse(response.choices[0].message.content || '{}');

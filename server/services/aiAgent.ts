@@ -58,8 +58,7 @@ Response format: Return JSON with 'message' (your response), optional 'actions' 
           { role: "user", content: contextualPrompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7,
-        max_tokens: 1000,
+        max_completion_tokens: 1000,
       });
 
       const agentResponse = JSON.parse(response.choices[0].message.content || '{}');
@@ -170,7 +169,6 @@ Provide insights, identify issues, and suggest optimizations. Format as JSON wit
           { role: "user", content: analysisPrompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7,
       });
 
       return JSON.parse(response.choices[0].message.content || '{}');
