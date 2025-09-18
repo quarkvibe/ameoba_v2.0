@@ -13,14 +13,14 @@ export default function Landing() {
           </div>
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">Amoeba</h1>
-            <p className="text-xl text-muted-foreground">Intelligent Email Operations</p>
+            <p className="text-xl text-muted-foreground">Intelligent Horoscope Service</p>
           </div>
         </div>
 
         {/* Description */}
         <div className="space-y-4 max-w-2xl mx-auto">
           <p className="text-lg text-foreground">
-            A self-contained email utility with an intelligent agent and a sleek dashboard. 
+            A self-contained horoscope service with an intelligent agent and a sleek dashboard. 
             Deploy it, access the dashboard, and control everything through a beautiful interface 
             or natural language.
           </p>
@@ -38,7 +38,7 @@ export default function Landing() {
               </div>
               <h3 className="font-semibold text-foreground mb-2">AI Agent Control</h3>
               <p className="text-sm text-muted-foreground">
-                Natural language commands for complete email operations management
+                Natural language commands for complete horoscope generation management
               </p>
             </CardContent>
           </Card>
@@ -50,7 +50,7 @@ export default function Landing() {
               </div>
               <h3 className="font-semibold text-foreground mb-2">Real-time Dashboard</h3>
               <p className="text-sm text-muted-foreground">
-                Live metrics, queue monitoring, and campaign management in one view
+                Live metrics, queue monitoring, and horoscope generation in one view
               </p>
             </CardContent>
           </Card>
@@ -62,7 +62,7 @@ export default function Landing() {
               </div>
               <h3 className="font-semibold text-foreground mb-2">Visual Configuration</h3>
               <p className="text-sm text-muted-foreground">
-                No-code setup for email providers, campaigns, and automation
+                No-code setup for astronomy data, horoscope generation, and automation
               </p>
             </CardContent>
           </Card>
@@ -84,7 +84,7 @@ export default function Landing() {
         {/* Footer */}
         <div className="pt-8 border-t border-border/50">
           <p className="text-sm text-muted-foreground">
-            Deploy Amoeba, open the dashboard, and take control of your email operations 
+            Deploy Amoeba, open the dashboard, and take control of your horoscope service 
             with the perfect blend of visual control and AI assistance.
           </p>
         </div>

@@ -20,7 +20,7 @@ First, you'll need to generate an API key for your Zodiac Buddy application:
 Verify the service is running:
 
 ```bash
-curl https://your-amoeba-instance.com/api/integration/health
+curl https://ameoba.org/api/integration/health
 ```
 
 Expected response:
@@ -39,7 +39,7 @@ Fetch all 12 zodiac sign horoscopes for today:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-     https://your-amoeba-instance.com/api/integration/horoscopes/today
+     https://ameoba.org/api/integration/horoscopes/today
 ```
 
 Response format:
@@ -68,13 +68,13 @@ Fetch a horoscope for a specific sign and date:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-     https://your-amoeba-instance.com/api/integration/horoscopes/leo/2025-09-10
+     https://ameoba.org/api/integration/horoscopes/leo/2025-09-10
 ```
 
 ## API Endpoints
 
 ### Base URL
-`https://your-amoeba-instance.com/api/integration`
+`https://ameoba.org/api/integration`
 
 ### Authentication
 All API endpoints (except health check) require authentication using API keys:
@@ -148,7 +148,7 @@ curl -X POST \
        "url": "https://your-zodiac-buddy-app.com/api/webhooks/amoeba",
        "events": ["horoscopes.daily_complete"]
      }' \
-     https://your-amoeba-instance.com/api/integration/webhooks
+     https://ameoba.org/api/integration/webhooks
 ```
 
 ### Webhook Events
@@ -218,7 +218,7 @@ class AmoebaClient {
 }
 
 // Usage
-const amoeba = new AmoebaClient('your-api-key', 'https://your-amoeba-instance.com/api/integration');
+const amoeba = new AmoebaClient('your-api-key', 'https://ameoba.org/api/integration');
 
 // Get today's horoscopes
 const todaysHoroscopes = await amoeba.getTodaysHoroscopes();
@@ -259,7 +259,7 @@ class AmoebaClient:
         return response.json()
 
 # Usage
-amoeba = AmoebaClient('your-api-key', 'https://your-amoeba-instance.com/api/integration')
+amoeba = AmoebaClient('your-api-key', 'https://ameoba.org/api/integration')
 
 # Get today's horoscopes
 todays_horoscopes = amoeba.get_todays_horoscopes()
