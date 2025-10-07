@@ -13,19 +13,18 @@ export default function Landing() {
           </div>
           <div>
             <h1 className="text-4xl font-bold text-foreground mb-2">Amoeba</h1>
-            <p className="text-xl text-muted-foreground">Intelligent Horoscope Service</p>
+            <p className="text-xl text-muted-foreground">Universal AI Content Generation Platform</p>
           </div>
         </div>
 
         {/* Description */}
         <div className="space-y-4 max-w-2xl mx-auto">
           <p className="text-lg text-foreground">
-            A self-contained horoscope service with an intelligent agent and a sleek dashboard. 
-            Deploy it, access the dashboard, and control everything through a beautiful interface 
-            or natural language.
+            Generate and deliver AI content on your terms. Bring your own API keys for any AI service, 
+            configure calls with precision, and automate delivery via email or API.
           </p>
           <p className="text-muted-foreground">
-            One service, total control, zero complexity.
+            Your infrastructure, your keys, total control.
           </p>
         </div>
 
@@ -34,11 +33,11 @@ export default function Landing() {
           <Card className="bg-card/50 border-border backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-brain text-primary text-xl"></i>
+                <i className="fas fa-key text-primary text-xl"></i>
               </div>
-              <h3 className="font-semibold text-foreground mb-2">AI Agent Control</h3>
+              <h3 className="font-semibold text-foreground mb-2">Bring Your Own Keys</h3>
               <p className="text-sm text-muted-foreground">
-                Natural language commands for complete horoscope generation management
+                Use any AI provider (OpenAI, Anthropic, etc.) with your own API keys
               </p>
             </CardContent>
           </Card>
@@ -46,11 +45,11 @@ export default function Landing() {
           <Card className="bg-card/50 border-border backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-chart-line text-accent text-xl"></i>
+                <i className="fas fa-sliders-h text-accent text-xl"></i>
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Real-time Dashboard</h3>
+              <h3 className="font-semibold text-foreground mb-2">Configurable Workflows</h3>
               <p className="text-sm text-muted-foreground">
-                Live metrics, queue monitoring, and horoscope generation in one view
+                Fine-tune prompts, token limits, and generation parameters with ease
               </p>
             </CardContent>
           </Card>
@@ -58,11 +57,11 @@ export default function Landing() {
           <Card className="bg-card/50 border-border backdrop-blur-sm">
             <CardContent className="p-6 text-center">
               <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-cog text-chart-3 text-xl"></i>
+                <i className="fas fa-paper-plane text-chart-3 text-xl"></i>
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Visual Configuration</h3>
+              <h3 className="font-semibold text-foreground mb-2">Flexible Delivery</h3>
               <p className="text-sm text-muted-foreground">
-                No-code setup for astronomy data, horoscope generation, and automation
+                Schedule via cron + email or deliver via API with generated keys for curl
               </p>
             </CardContent>
           </Card>
@@ -84,8 +83,8 @@ export default function Landing() {
         {/* Footer */}
         <div className="pt-8 border-t border-border/50">
           <p className="text-sm text-muted-foreground">
-            Deploy Amoeba, open the dashboard, and take control of your horoscope service 
-            with the perfect blend of visual control and AI assistance.
+            Deploy Amoeba, configure your AI workflows, and automate content generation 
+            with complete control over providers, delivery, and scheduling.
           </p>
         </div>
       </div>
