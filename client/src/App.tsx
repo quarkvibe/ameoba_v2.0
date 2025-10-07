@@ -18,6 +18,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Dashboard} />
+          <Route path="/dashboard/:rest*" component={Dashboard} />
         </>
       )}
       <Route component={NotFound} />
