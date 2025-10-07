@@ -106,7 +106,7 @@ export class HoroscopeService {
     zodiacSign: ZodiacSign, 
     astrologyData: AstrologyDataCache,
     date: string
-  ): Promise<string> {
+  ): Promise<{ content: string; technicalDetails: string | null }> {
     try {
       const planetaryInfluences = this.analyzePlanetaryInfluences(zodiacSign, astrologyData);
       
@@ -131,20 +131,26 @@ MOON PHASE: ${astrologyData.moonPhase}
 PLANETARY INFLUENCES FOR ${zodiacSign.name.toUpperCase()}:
 ${planetaryInfluences}
 
-Generate a personalized, engaging daily horoscope (150-200 words) that:
-1. References specific planetary influences affecting ${zodiacSign.name} today
-2. Provides guidance for love, career, health, and personal growth
-3. Includes a lucky number (1-99) and lucky color
-4. Uses an encouraging and mystical tone
-5. Mentions the moon phase if relevant
-6. Is specific to the actual planetary positions provided
+Generate TWO versions of the horoscope:
+
+1. MAIN HOROSCOPE (150-200 words): Create an accessible, mystical, and engaging horoscope that:
+   - Uses the planetary data to inform the guidance, but weaves it naturally into the narrative
+   - Speaks to emotions, opportunities, and life experiences
+   - Provides guidance for love, career, health, and personal growth
+   - Uses an encouraging, mystical tone that feels cosmic and insightful
+   - AVOID technical jargon like "19° Libra" or "trine" - instead say things like "the harmony between the stars" or "cosmic energies align"
+   - Make it readable and engaging for someone who doesn't study astrology
+
+2. TECHNICAL DETAILS (optional, for advanced users): A concise technical summary that includes:
+   - Specific planetary positions with degrees (e.g., "Sun 19° Libra")
+   - Key aspects (trine, opposition, conjunction, square)
+   - Relevant house placements if applicable
+   - Moon phase and any significant transits
 
 Format as JSON:
 {
-  "content": "horoscope text here...",
-  "mood": "positive|neutral|challenging",
-  "luckNumber": number,
-  "luckyColor": "color name"
+  "content": "main horoscope text here (mystical and accessible)...",
+  "technicalDetails": "technical planetary information here..."
 }`;
 
       const response = await openai.chat.completions.create({
@@ -173,11 +179,18 @@ Format as JSON:
         throw new Error('Empty horoscope content from GPT-5');
       }
       
-      return result.content;
+      // Return both content and technical details
+      return {
+        content: result.content,
+        technicalDetails: result.technicalDetails || null
+      };
       
     } catch (error) {
       console.error(`Error generating horoscope for ${zodiacSign.name}:`, error);
-      return `The cosmic energies are aligning for ${zodiacSign.name} today, bringing opportunities for growth and positive change.`;
+      return {
+        content: `The cosmic energies are aligning for ${zodiacSign.name} today, bringing opportunities for growth and positive change.`,
+        technicalDetails: null
+      };
     }
   }
 
@@ -374,23 +387,14 @@ Format as JSON:
       // Generate horoscope for each sign
       for (const sign of zodiacSigns) {
         try {
-          const content = await this.generateHoroscopeForSign(sign, astrologyData, date);
-          
-          // Parse the full response to extract mood, luck number, etc.
-          let horoscopeData = { content, mood: 'positive', luckNumber: Math.floor(Math.random() * 99) + 1, luckyColor: 'blue' };
-          
-          try {
-            const fullResponse = await this.generateFullHoroscopeData(sign, astrologyData, date);
-            horoscopeData = { ...horoscopeData, ...fullResponse };
-          } catch (e) {
-            console.log('Using fallback horoscope data for', sign.name);
-          }
+          const { content, technicalDetails } = await this.generateHoroscopeForSign(sign, astrologyData, date);
 
-          // Save the horoscope (removed planetaryInfluence as it's not in the current schema)
+          // Save the horoscope with both accessible content and technical details
           const horoscope: InsertHoroscope = {
             zodiacSignId: sign.id,
             date: date,
-            content: horoscopeData.content,
+            content: content,
+            technicalDetails: technicalDetails,
           };
 
           await storage.createHoroscope(horoscope);

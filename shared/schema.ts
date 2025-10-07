@@ -142,7 +142,8 @@ export const horoscopes = pgTable("horoscopes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   zodiacSignId: varchar("zodiac_sign_id").references(() => zodiacSigns.id).notNull(),
   date: date("date").notNull(),
-  content: text("content").notNull(), // generated horoscope text
+  content: text("content").notNull(), // generated horoscope text (accessible, mystical)
+  technicalDetails: text("technical_details"), // optional technical planetary info for advanced users
   // Temporarily removed optional fields that don't exist in production:
   // mood, luckNumber, luckyColor, planetaryInfluence, generatedAt, generationJobId
 }, (table) => [
