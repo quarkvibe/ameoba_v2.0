@@ -388,6 +388,193 @@ export const insertIntegrationLogSchema = createInsertSchema(integrationLogs).om
 });
 
 // ===============================================
+// BRING YOUR OWN KEYS (BYOK) WORKFLOW SYSTEM
+// ===============================================
+
+// AI provider credentials (user-supplied API keys)
+// SECURITY: apiKey field MUST be encrypted at-rest using server-side encryption
+// The service layer handles encryption/decryption transparently
+export const aiCredentials = pgTable("ai_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  provider: varchar("provider", { length: 50 }).notNull(), // 'openai', 'anthropic', 'cohere', 'google', etc.
+  name: varchar("name", { length: 200 }).notNull(), // user-friendly name
+  apiKey: text("api_key").notNull(), // ENCRYPTED - decrypted only in memory when needed
+  additionalConfig: jsonb("additional_config"), // org ID, project ID, etc. (public data)
+  isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
+  lastUsed: timestamp("last_used"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_ai_credentials_user").on(table.userId),
+  index("idx_ai_credentials_provider").on(table.provider),
+]);
+
+// Email service credentials (user-supplied)
+// SECURITY: All secret fields (apiKey, awsSecretAccessKey) MUST be encrypted at-rest
+// The service layer handles encryption/decryption transparently
+export const emailServiceCredentials = pgTable("email_service_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  provider: varchar("provider", { length: 50 }).notNull(), // 'sendgrid', 'aws_ses', 'mailgun', etc.
+  name: varchar("name", { length: 200 }).notNull(),
+  apiKey: text("api_key"), // ENCRYPTED - for SendGrid, Mailgun
+  awsAccessKeyId: text("aws_access_key_id"), // for AWS SES (public, not secret)
+  awsSecretAccessKey: text("aws_secret_access_key"), // ENCRYPTED - for AWS SES
+  awsRegion: varchar("aws_region", { length: 50 }), // for AWS SES (public)
+  fromEmail: varchar("from_email", { length: 255 }).notNull(),
+  fromName: varchar("from_name", { length: 200 }),
+  isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
+  lastUsed: timestamp("last_used"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_email_creds_user").on(table.userId),
+]);
+
+// Workflows - AI content generation configurations
+export const workflows = pgTable("workflows", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  aiCredentialId: uuid("ai_credential_id").references(() => aiCredentials.id).notNull(),
+  model: varchar("model", { length: 100 }).notNull(), // 'gpt-4', 'claude-3-opus', etc.
+  systemPrompt: text("system_prompt"),
+  userPrompt: text("user_prompt").notNull(),
+  temperature: decimal("temperature", { precision: 3, scale: 2 }).default('0.7'),
+  maxTokens: integer("max_tokens").default(1000),
+  topP: decimal("top_p", { precision: 3, scale: 2 }),
+  frequencyPenalty: decimal("frequency_penalty", { precision: 3, scale: 2 }),
+  presencePenalty: decimal("presence_penalty", { precision: 3, scale: 2 }),
+  variables: jsonb("variables"), // dynamic variables to substitute in prompts
+  outputFormat: varchar("output_format", { length: 50 }).default('text'), // 'text', 'json', 'markdown'
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_workflows_user").on(table.userId),
+  index("idx_workflows_ai_cred").on(table.aiCredentialId),
+]);
+
+// Workflow executions - history and results
+export const workflowExecutions = pgTable("workflow_executions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  workflowId: uuid("workflow_id").references(() => workflows.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'running', 'completed', 'failed'
+  input: jsonb("input"), // variable values used
+  output: text("output"), // generated content
+  tokenUsage: jsonb("token_usage"), // prompt_tokens, completion_tokens, total_tokens
+  executionTime: integer("execution_time"), // milliseconds
+  error: text("error"),
+  metadata: jsonb("metadata"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_executions_workflow").on(table.workflowId),
+  index("idx_executions_status").on(table.status),
+  index("idx_executions_created").on(table.createdAt),
+]);
+
+// Delivery configurations - scheduled or API-based
+export const deliveryConfigs = pgTable("delivery_configs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  workflowId: uuid("workflow_id").references(() => workflows.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  type: varchar("type", { length: 20 }).notNull(), // 'scheduled_email', 'api', 'webhook'
+  // Email delivery fields
+  emailCredentialId: uuid("email_credential_id").references(() => emailServiceCredentials.id),
+  recipientEmails: jsonb("recipient_emails"), // array of email addresses
+  emailSubject: varchar("email_subject", { length: 500 }),
+  cronExpression: varchar("cron_expression", { length: 100 }),
+  timezone: varchar("timezone", { length: 50 }).default('UTC'),
+  // API delivery fields
+  apiKeyId: uuid("api_key_id").references(() => apiKeys.id), // reference to generated API key
+  // Webhook delivery fields
+  webhookUrl: varchar("webhook_url", { length: 500 }),
+  webhookHeaders: jsonb("webhook_headers"),
+  // Common fields
+  isActive: boolean("is_active").default(true),
+  lastDelivery: timestamp("last_delivery"),
+  nextDelivery: timestamp("next_delivery"),
+  totalDeliveries: integer("total_deliveries").default(0),
+  failedDeliveries: integer("failed_deliveries").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_delivery_configs_workflow").on(table.workflowId),
+  index("idx_delivery_configs_type").on(table.type),
+]);
+
+// Delivery logs
+export const deliveryLogs = pgTable("delivery_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  deliveryConfigId: uuid("delivery_config_id").references(() => deliveryConfigs.id).notNull(),
+  executionId: uuid("execution_id").references(() => workflowExecutions.id),
+  status: varchar("status", { length: 20 }).notNull(), // 'success', 'failed', 'pending'
+  recipientEmail: varchar("recipient_email", { length: 255 }),
+  statusCode: integer("status_code"),
+  response: jsonb("response"),
+  error: text("error"),
+  deliveredAt: timestamp("delivered_at").defaultNow(),
+}, (table) => [
+  index("idx_delivery_logs_config").on(table.deliveryConfigId),
+  index("idx_delivery_logs_status").on(table.status),
+]);
+
+// Insert schemas for BYOK tables
+export const insertAiCredentialSchema = createInsertSchema(aiCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEmailServiceCredentialSchema = createInsertSchema(emailServiceCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWorkflowSchema = createInsertSchema(workflows).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWorkflowExecutionSchema = createInsertSchema(workflowExecutions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDeliveryConfigSchema = createInsertSchema(deliveryConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDeliveryLogSchema = createInsertSchema(deliveryLogs).omit({
+  id: true,
+});
+
+// Types for BYOK tables
+export type AiCredential = typeof aiCredentials.$inferSelect;
+export type InsertAiCredential = z.infer<typeof insertAiCredentialSchema>;
+export type EmailServiceCredential = typeof emailServiceCredentials.$inferSelect;
+export type InsertEmailServiceCredential = z.infer<typeof insertEmailServiceCredentialSchema>;
+export type Workflow = typeof workflows.$inferSelect;
+export type InsertWorkflow = z.infer<typeof insertWorkflowSchema>;
+export type WorkflowExecution = typeof workflowExecutions.$inferSelect;
+export type InsertWorkflowExecution = z.infer<typeof insertWorkflowExecutionSchema>;
+export type DeliveryConfig = typeof deliveryConfigs.$inferSelect;
+export type InsertDeliveryConfig = z.infer<typeof insertDeliveryConfigSchema>;
+export type DeliveryLog = typeof deliveryLogs.$inferSelect;
+export type InsertDeliveryLog = z.infer<typeof insertDeliveryLogSchema>;
+
+// ===============================================
 // UNIVERSAL AI CONTENT PLATFORM TABLES
 // ===============================================
 
