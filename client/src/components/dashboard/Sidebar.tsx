@@ -2,6 +2,7 @@ import { useState } from "react";
 
 const navigation = [
   { id: 'overview', name: 'Overview', icon: 'fas fa-chart-line' },
+  { id: 'horoscopes', name: 'Horoscopes', icon: 'fas fa-star' },
   { id: 'generation', name: 'AI Content Generation', icon: 'fas fa-robot' },
   { id: 'content-config', name: 'Content Templates', icon: 'fas fa-file-text' },
   { id: 'data-sources', name: 'Data Sources', icon: 'fas fa-database' },

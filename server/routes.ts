@@ -171,6 +171,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get horoscope generation status (session auth)
+  app.get("/api/dashboard/horoscopes/generation-status", isAuthenticated, async (req, res) => {
+    try {
+      const { date } = req.query;
+      const targetDate = date as string || new Date().toISOString().split('T')[0];
+      const status = await storage.getHoroscopeGenerationByDate(targetDate);
+      
+      res.json(status || {
+        date: targetDate,
+        status: 'not_started',
+        totalSigns: 12,
+        completedSigns: 0
+      });
+    } catch (error) {
+      console.error("Error fetching generation status:", error);
+      res.status(500).json({ message: "Failed to fetch generation status" });
+    }
+  });
+
   // =============================================================================
   // HOROSCOPE API ENDPOINTS (API Key Required)
   // =============================================================================

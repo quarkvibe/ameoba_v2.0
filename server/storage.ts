@@ -458,6 +458,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(horoscopeGenerations.id, id));
   }
 
+  async getHoroscopeGenerationByDate(date: string): Promise<HoroscopeGeneration | undefined> {
+    const [generation] = await db.select()
+      .from(horoscopeGenerations)
+      .where(eq(horoscopeGenerations.date, date));
+    return generation;
+  }
+
   // Daily horoscope operations
   async createHoroscope(horoscope: InsertHoroscope): Promise<Horoscope> {
     // Delete any existing horoscope for this sign and date

@@ -19,6 +19,7 @@ import OutputConfiguration from "@/components/dashboard/OutputConfiguration";
 import ScheduleManager from "@/components/dashboard/ScheduleManager";
 import ApiSettings from "@/components/dashboard/ApiSettings";
 import Terminal from "@/components/dashboard/Terminal";
+import HoroscopeViewer from "@/components/dashboard/HoroscopeViewer";
 import { useWebSocketContext } from "@/contexts/WebSocketContext";
 
 export default function Dashboard() {
@@ -55,6 +56,8 @@ export default function Dashboard() {
             </div>
           </div>
         );
+      case "horoscopes":
+        return <HoroscopeViewer />;
       case "generation":
         return <ContentGeneration />;
       case "content-config":
