@@ -16,27 +16,43 @@ const navigation = [
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ activeView, onViewChange }: SidebarProps) {
+export default function Sidebar({ activeView, onViewChange, isOpen = false, onClose }: SidebarProps) {
   const handleNavigation = (itemId: string) => {
     onViewChange(itemId);
     console.log('Navigating to:', itemId);
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border">
+    <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-transform duration-300 lg:translate-x-0 ${
+      isOpen ? 'translate-x-0' : '-translate-x-full'
+    }`}>
       <div className="flex flex-col h-full">
         
         {/* Logo Section */}
-        <div className="flex items-center gap-3 p-6 border-b border-border">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <i className="fas fa-atom text-primary-foreground text-sm"></i>
+        <div className="flex items-center justify-between gap-3 p-6 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <i className="fas fa-atom text-primary-foreground text-sm"></i>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">Amoeba</h1>
+              <p className="text-xs text-muted-foreground">AI Content Platform</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Amoeba</h1>
-            <p className="text-xs text-muted-foreground">AI Content Platform</p>
-          </div>
+          {/* Close button for mobile */}
+          {onClose && (
+            <button 
+              onClick={onClose}
+              className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+              data-testid="button-close-sidebar"
+            >
+              <i className="fas fa-times text-muted-foreground"></i>
+            </button>
+          )}
         </div>
 
         {/* Navigation */}

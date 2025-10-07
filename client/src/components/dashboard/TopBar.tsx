@@ -5,7 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 
-export default function TopBar() {
+interface TopBarProps {
+  onMenuClick?: () => void;
+}
+
+export default function TopBar({ onMenuClick }: TopBarProps) {
   const { toast } = useToast();
 
   const sendTestMutation = useMutation({
@@ -63,21 +67,35 @@ export default function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between p-4 gap-2">
+        
+        {/* Mobile Menu Button */}
+        {onMenuClick && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onMenuClick}
+            className="lg:hidden"
+            data-testid="button-mobile-menu"
+          >
+            <i className="fas fa-bars"></i>
+          </Button>
+        )}
         
         {/* Agent Chat */}
-        <div className="flex-1 max-w-2xl mr-4">
+        <div className="flex-1 max-w-2xl hidden sm:block">
           <AgentChat />
         </div>
 
         {/* Quick Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => sendTestMutation.mutate()}
             disabled={sendTestMutation.isPending}
             title="Send Test Email"
+            className="hidden sm:inline-flex"
             data-testid="button-test-email"
           >
             <i className="fas fa-flask"></i>
@@ -89,6 +107,7 @@ export default function TopBar() {
             onClick={() => generateReportMutation.mutate()}
             disabled={generateReportMutation.isPending}
             title="Generate Report"
+            className="hidden sm:inline-flex"
             data-testid="button-generate-report"
           >
             <i className="fas fa-file-download"></i>
@@ -100,7 +119,7 @@ export default function TopBar() {
             onClick={() => emergencyStopMutation.mutate()}
             disabled={emergencyStopMutation.isPending}
             title="Emergency Stop"
-            className="text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:bg-destructive/10 hidden sm:inline-flex"
             data-testid="button-emergency-stop"
           >
             <i className="fas fa-stop-circle"></i>
