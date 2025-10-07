@@ -594,6 +594,14 @@ export class AstronomyService {
           else if (phaseAngle < 315) currentPhase = 'Last Quarter';
           else currentPhase = 'Waning Crescent';
           
+          console.log(`🌙 Swiss Ephemeris lunar phase: Sun=${sunResult.longitude.toFixed(2)}°, Moon=${moonResult.longitude.toFixed(2)}°, phaseAngle=${phaseAngle.toFixed(1)}°, illumination=${(illumination * 100).toFixed(1)}%, phase=${currentPhase}`);
+          
+          // Validate the result - if illumination > 90% but phase is not Full/Waxing Gibbous, use fallback
+          if (illumination > 0.9 && !['Full', 'Waxing Gibbous'].includes(currentPhase)) {
+            console.warn(`⚠️ Swiss Ephemeris lunar phase looks wrong (${(illumination * 100).toFixed(1)}% illuminated but showing ${currentPhase}), using fallback`);
+            return this.calculateBasicLunarPhase(date);
+          }
+          
           return {
             name: currentPhase,
             illumination: illumination * 100,
@@ -617,7 +625,7 @@ export class AstronomyService {
    */
   private calculateBasicLunarPhase(date: Date): LunarPhase {
     const cycleLength = 29.5305882; // Average lunar cycle length in days
-    const knownNewMoon = new Date('2024-01-11T11:57:00Z'); // A known new moon
+    const knownNewMoon = new Date('2025-09-21T19:54:00Z'); // New moon on Sept 21, 2025 (recent reference)
     
     const daysSinceNewMoon = (date.getTime() - knownNewMoon.getTime()) / (1000 * 60 * 60 * 24);
     const cyclePosition = ((daysSinceNewMoon % cycleLength) + cycleLength) % cycleLength;
@@ -634,6 +642,8 @@ export class AstronomyService {
     else if (cyclePosition < 20.25) currentPhase = 'Waning Gibbous';
     else if (cyclePosition < 23.93) currentPhase = 'Last Quarter';
     else currentPhase = 'Waning Crescent';
+    
+    console.log(`🌙 Fallback lunar phase calc: position=${cyclePosition.toFixed(2)} days, angle=${phaseAngle.toFixed(1)}°, illumination=${(illumination * 100).toFixed(1)}%, phase=${currentPhase}`);
     
     return {
       name: currentPhase,
