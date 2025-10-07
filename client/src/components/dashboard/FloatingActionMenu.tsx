@@ -30,26 +30,6 @@ export default function FloatingActionMenu() {
     },
   });
 
-  const emergencyStopMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/queue/pause", {});
-    },
-    onSuccess: () => {
-      toast({
-        title: "Emergency Stop Activated",
-        description: "All horoscope generation has been paused.",
-        variant: "destructive",
-      });
-      setIsOpen(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
   const showSystemHealth = () => {
     toast({
@@ -73,13 +53,6 @@ export default function FloatingActionMenu() {
       disabled: generateHoroscopesMutation.isPending,
     },
     {
-      icon: "fas fa-stop",
-      title: "Emergency Stop",
-      color: "bg-destructive text-destructive-foreground",
-      action: () => emergencyStopMutation.mutate(),
-      disabled: emergencyStopMutation.isPending,
-    },
-    {
       icon: "fas fa-heartbeat",
       title: "System Health",
       color: "bg-primary text-primary-foreground",
@@ -92,22 +65,25 @@ export default function FloatingActionMenu() {
     <div className="fixed bottom-6 right-6 z-50">
       <div className="relative">
         
-        {/* Sub-actions */}
+        {/* Sub-actions with visible labels */}
         <div className={`absolute bottom-16 right-0 space-y-2 transition-all duration-200 ${
           isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none translate-y-2'
         }`}>
           {actionItems.map((item, index) => (
-            <Button
-              key={index}
-              size="icon"
-              onClick={item.action}
-              disabled={item.disabled}
-              className={`w-12 h-12 ${item.color} rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105`}
-              title={item.title}
-              data-testid={`fab-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              <i className={item.icon}></i>
-            </Button>
+            <div key={index} className="flex items-center gap-2 justify-end">
+              <span className="bg-card px-3 py-1 rounded-full shadow-md text-sm font-medium whitespace-nowrap">
+                {item.title}
+              </span>
+              <Button
+                size="icon"
+                onClick={item.action}
+                disabled={item.disabled}
+                className={`w-12 h-12 ${item.color} rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105`}
+                data-testid={`fab-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <i className={item.icon}></i>
+              </Button>
+            </div>
           ))}
         </div>
 
