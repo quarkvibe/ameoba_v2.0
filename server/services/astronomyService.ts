@@ -573,7 +573,9 @@ export class AstronomyService {
         const sunResult = sweph.calc_ut(julianDay, CELESTIAL_BODIES.SUN, sweph.SEFLG_SWIEPH);
         const moonResult = sweph.calc_ut(julianDay, CELESTIAL_BODIES.MOON, sweph.SEFLG_SWIEPH);
         
-        if (!sunResult.error && !moonResult.error) {
+        if (!sunResult.error && !moonResult.error && 
+            sunResult.longitude !== undefined && sunResult.longitude !== null &&
+            moonResult.longitude !== undefined && moonResult.longitude !== null) {
           // Calculate phase angle (elongation of Moon from Sun)
           let phaseAngle = moonResult.longitude - sunResult.longitude;
           if (phaseAngle < 0) phaseAngle += 360;
