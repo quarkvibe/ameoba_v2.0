@@ -969,7 +969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { config } = req.body;
       
-      // Basic SSRF protection - only allow HTTPS URLs and block private IPs
+      // SSRF Protection - Validate URLs even in stub implementation
       if (config?.endpoint) {
         const url = new URL(config.endpoint);
         if (url.protocol !== 'https:') {
@@ -991,12 +991,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Mock test response for now - in a real implementation, this would make the actual request
+      // STUB IMPLEMENTATION - Returns mock test result after validation
+      // Real implementation would make actual HTTP requests to the validated endpoint
       const testResult = {
         success: true,
         data: { test: true, timestamp: new Date().toISOString() },
         responseTime: Math.floor(Math.random() * 500) + 100,
-        statusCode: 200
+        statusCode: 200,
+        warning: 'This is a stub implementation. Real data source testing is not yet implemented.',
+        mock: true
       };
       
       res.json(testResult);
@@ -1076,11 +1079,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Output channel not found' });
       }
 
-      // Mock test response for now - in a real implementation, this would test the actual output
+      // STUB IMPLEMENTATION - Returns mock success without actual delivery
       const testResult = {
         success: true,
-        message: `Test message sent to ${channel.type} channel: ${channel.name}`,
-        timestamp: new Date().toISOString()
+        message: `[MOCK] Test message sent to ${channel.type} channel: ${channel.name}`,
+        timestamp: new Date().toISOString(),
+        warning: 'This is a stub implementation. Real output channel testing is not yet implemented.',
+        mock: true
       };
       
       res.json(testResult);
@@ -1180,7 +1185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Scheduled job not found' });
       }
 
-      // Mock job execution for now - in a real implementation, this would trigger the job
+      // STUB IMPLEMENTATION - Simulates job execution without real processing
       await storage.updateScheduledJobStatus(id, 'running');
       
       // Simulate job execution
@@ -1192,7 +1197,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }, 1000);
       
-      res.json({ message: 'Job execution triggered', jobId: id });
+      res.json({ 
+        message: 'Job execution triggered (MOCK)', 
+        jobId: id,
+        warning: 'This is a stub implementation. Real job execution with AI content generation is not yet implemented.',
+        mock: true
+      });
     } catch (error) {
       console.error('Error running scheduled job:', error);
       res.status(500).json({ message: 'Failed to run scheduled job', error: error instanceof Error ? error.message : 'Unknown error' });
@@ -1223,27 +1233,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Template not found' });
       }
 
-      // Mock content generation for now - in a real implementation, this would:
-      // 1. Fetch data from connected data sources
-      // 2. Process template with AI
-      // 3. Generate content
-      // 4. Save to database
-      // 5. Send to output channels
-      
-      const mockContent = `Generated content for template "${template.name}" at ${new Date().toISOString()}`;
+      // STUB IMPLEMENTATION - Real AI content generation not yet implemented
+      // This mock version creates placeholder content for UI testing
+      const mockContent = `[MOCK] Generated content for template "${template.name}" at ${new Date().toISOString()}`;
       
       const generatedContent = await storage.createGeneratedContent({
         templateId: templateId,
         userId: userId,
         content: mockContent,
         generatedAt: new Date(),
-        metadata: { mock: true, timestamp: new Date().toISOString() }
+        metadata: { 
+          mock: true, 
+          stub: true,
+          note: 'This is placeholder content. Real AI generation requires user-supplied API keys and data source integration.',
+          timestamp: new Date().toISOString() 
+        }
       });
       
       res.json({ 
-        message: 'Content generation completed',
+        message: 'Content generation completed (MOCK)',
         contentId: generatedContent.id,
-        templateName: template.name
+        templateName: template.name,
+        warning: 'This is a stub implementation. Real AI content generation is not yet implemented.',
+        mock: true
       });
     } catch (error) {
       console.error('Error generating content:', error);
@@ -1263,18 +1275,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'No active templates found' });
       }
 
-      // Mock batch generation for now
+      // STUB IMPLEMENTATION - Real batch AI generation not yet implemented
       const results = [];
       for (const template of activeTemplates) {
         try {
-          const mockContent = `Batch generated content for template "${template.name}" at ${new Date().toISOString()}`;
+          const mockContent = `[MOCK] Batch generated content for template "${template.name}" at ${new Date().toISOString()}`;
           
           const generatedContent = await storage.createGeneratedContent({
             templateId: template.id,
             userId: userId,
             content: mockContent,
             generatedAt: new Date(),
-            metadata: { batch: true, timestamp: new Date().toISOString() }
+            metadata: { 
+              batch: true, 
+              mock: true,
+              stub: true,
+              note: 'This is placeholder content. Real AI generation requires user-supplied API keys and data source integration.',
+              timestamp: new Date().toISOString() 
+            }
           });
           
           results.push({
@@ -1296,10 +1314,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const successCount = results.filter(r => r.success).length;
       
       res.json({ 
-        message: `Batch generation completed: ${successCount}/${activeTemplates.length} templates successful`,
+        message: `Batch generation completed (MOCK): ${successCount}/${activeTemplates.length} templates successful`,
         results: results,
         totalTemplates: activeTemplates.length,
-        successCount: successCount
+        successCount: successCount,
+        warning: 'This is a stub implementation. Real AI content generation is not yet implemented.',
+        mock: true
       });
     } catch (error) {
       console.error('Error in batch generation:', error);

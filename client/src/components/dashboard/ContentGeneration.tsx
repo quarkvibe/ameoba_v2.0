@@ -438,7 +438,7 @@ export default function ContentGeneration() {
                       <div>
                         <div className="font-medium text-sm">{template?.name || 'Unknown Template'}</div>
                         <div className="text-xs text-muted-foreground">
-                          Generated: {new Date(content.generatedAt).toLocaleString()}
+                          Generated: {content.generatedAt ? new Date(content.generatedAt).toLocaleString() : 'Unknown'}
                         </div>
                       </div>
                       <Badge variant="outline" className="text-xs">
