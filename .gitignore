@@ -10,6 +10,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.backup*
 
 # Build outputs
 dist/
@@ -30,6 +31,7 @@ Thumbs.db
 # Logs
 logs/
 *.log
+amoeba.log
 
 # Database
 *.db
@@ -64,3 +66,21 @@ ephemeris_data/
 
 # Attached assets (temporary)
 attached_assets/
+
+# ==============================================================================
+# DEVELOPMENT DOCS (Keep private - not for public repo)
+# ==============================================================================
+
+# Session notes (development logs)
+docs/session-notes/
+
+# Internal analysis (working documents)
+docs/analysis/
+
+# Implementation details (too technical for public)
+docs/implementation/
+
+# Status reports (internal use)
+PRE_COMMIT_STATUS.md
+COMPLETE_SESSION_REPORT.md
+READY_TO_COMMIT.md
