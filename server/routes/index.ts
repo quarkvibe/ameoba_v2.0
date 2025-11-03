@@ -28,6 +28,7 @@ import { registerSMSCommandRoutes } from './smsCommands';
 import { registerTestingRoutes } from './testing';
 import { registerDeploymentRoutes } from './deployment';
 import { registerCodeModificationRoutes } from './codeModification';
+import { registerReproductionRoutes } from './reproduction';
 
 /**
  * ROUTE REGISTRY (Cell Nucleus)
@@ -86,6 +87,7 @@ export function registerRoutes(app: Express): Server {
   registerTestingRoutes(apiRouter);        // System testing, logs, diagnostics
   registerDeploymentRoutes(apiRouter);     // Deployment integration, DNS guidance
   registerCodeModificationRoutes(apiRouter); // AI code modification (Phase 3 - self-modifying AI)
+  registerReproductionRoutes(apiRouter);   // Cellular mitosis (spawn children for efficiency)
   
   // =============================================================================
   // MOUNT API ROUTER
