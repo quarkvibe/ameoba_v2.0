@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { cronService } from "./services/cronService";
+import { healthGuardianService } from "./services/healthGuardianService";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -75,6 +76,20 @@ app.use((req, res, next) => {
       log('⏰ Content generation scheduler started');
     } else {
       log('🔒 Cron service disabled via ENABLE_CRON=false (multi-instance safety)');
+    }
+    
+    // Start health guardian (self-preservation system)
+    if (process.env.ENABLE_HEALTH_GUARDIAN !== 'false') {
+      healthGuardianService.start();
+      log('🛡️ Health Guardian started - self-preservation active');
+      
+      // Listen for critical health events
+      healthGuardianService.on('health:critical', (status) => {
+        log(`🚨 CRITICAL HEALTH: Score ${status.score}/100 - ${status.issues.length} issues`);
+        // Could send SMS alert to admin here
+      });
+    } else {
+      log('🔒 Health Guardian disabled via ENABLE_HEALTH_GUARDIAN=false');
     }
   });
 })();
