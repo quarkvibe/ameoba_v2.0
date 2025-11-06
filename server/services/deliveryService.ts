@@ -3,6 +3,7 @@ import { activityMonitor } from './activityMonitor';
 import { emailService } from './emailService';
 import { voiceService } from './voiceService';
 import { smsService } from './smsService';
+import { socialMediaService } from './socialMediaService';
 
 /**
  * Delivery Service
@@ -154,6 +155,10 @@ export class DeliveryService {
       
       case 'voice':
         return await this.deliverViaVoice(channel, content, userId);
+      
+      case 'social':
+      case 'social-media':
+        return await this.deliverViaSocial(channel, content, userId);
       
       default:
         return {
@@ -454,6 +459,73 @@ export class DeliveryService {
         error: error.message,
       };
     }
+  }
+  
+  /**
+   * Deliver via Social Media
+   */
+  private async deliverViaSocial(
+    channel: any,
+    content: string,
+    userId: string
+  ): Promise<{ success: boolean; error?: string; metadata?: any }> {
+    
+    try {
+      const config = channel.config || {};
+      const platforms = config.platforms || [];  // ['twitter', 'linkedin']
+      
+      if (platforms.length === 0) {
+        return {
+          success: false,
+          error: 'No social media platforms configured',
+        };
+      }
+      
+      // Optimize content for social media (shorter, punchier)
+      const optimizedContent = await this.optimizeForSocial(content, platforms[0]);
+      
+      // Post to all configured platforms
+      const results = await socialMediaService.post(
+        userId,
+        optimizedContent,
+        platforms,
+        {
+          media: config.media,
+          threadMode: config.threadMode || false,
+        }
+      );
+      
+      const allSucceeded = results.every(r => r.success);
+      const successCount = results.filter(r => r.success).length;
+      
+      return {
+        success: allSucceeded,
+        metadata: {
+          platforms: platforms.join(', '),
+          posted: successCount,
+          total: platforms.length,
+          results,
+        },
+      };
+      
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+  
+  /**
+   * Optimize content for social media
+   */
+  private async optimizeForSocial(content: string, primaryPlatform: string): Promise<string> {
+    // Make content more social-media friendly
+    // - Shorter paragraphs
+    // - Add emoji/hashtags if appropriate
+    // - Platform-specific optimization
+    
+    return await socialMediaService.optimizeForPlatform(content, primaryPlatform);
   }
   
   /**

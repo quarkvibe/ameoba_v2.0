@@ -334,6 +334,30 @@ export const phoneServiceCredentials = pgTable("phone_service_credentials", {
   index("idx_phone_creds_user").on(table.userId),
 ]);
 
+// Social media credentials (user OAuth tokens for posting)
+// SECURITY: accessToken and refreshToken MUST be encrypted at-rest
+export const socialMediaCredentials = pgTable("social_media_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  platform: varchar("platform", { length: 50 }).notNull(), // 'twitter', 'linkedin', 'facebook', 'instagram', 'mastodon'
+  accountName: varchar("account_name", { length: 200 }), // @username or display name
+  accountId: text("account_id"), // Platform-specific user ID
+  accessToken: text("access_token").notNull(), // ENCRYPTED - OAuth access token
+  refreshToken: text("refresh_token"), // ENCRYPTED - OAuth refresh token
+  tokenExpiry: timestamp("token_expiry"), // When token expires
+  scope: text("scope"), // OAuth scopes granted
+  instanceUrl: varchar("instance_url", { length: 255 }), // For Mastodon (which instance)
+  config: jsonb("config"), // Platform-specific settings
+  isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
+  lastUsed: timestamp("last_used"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_social_creds_user").on(table.userId),
+  index("idx_social_creds_platform").on(table.platform),
+]);
+
 // Workflows - AI content generation configurations
 export const workflows = pgTable("workflows", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
