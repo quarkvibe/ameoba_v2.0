@@ -31,7 +31,7 @@ import SMSCommands from "@/components/dashboard/SMSCommands";
 import SystemTesting from "@/components/dashboard/SystemTesting";
 import DeploymentGuide from "@/components/dashboard/DeploymentGuide";
 import DatabaseConfiguration from "@/components/dashboard/DatabaseConfiguration";
-import CodeModification from "@/components/dashboard/CodeModification";
+// import CodeModification from "@/components/dashboard/CodeModification"; // DELETED - bloat
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -145,7 +145,18 @@ export default function Dashboard() {
         return <DatabaseConfiguration />;
       case "code-modification":
       case "self-modify":
-        return <CodeModification />;
+        return (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold">AI Assistant</h2>
+            <p className="text-muted-foreground">
+              AI assistant console coming soon. Will allow you to ask the AI to extend Amoeba's capabilities.
+            </p>
+            <div className="p-8 border-2 border-dashed rounded-lg text-center text-muted-foreground">
+              <i className="fas fa-robot text-4xl mb-4"></i>
+              <p>AI Assistant Interface - Coming Soon</p>
+            </div>
+          </div>
+        );
       case "license":
         return <LicenseManagement />;
       case "ollama":

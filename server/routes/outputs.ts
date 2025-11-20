@@ -57,10 +57,7 @@ export function registerOutputRoutes(router: Router) {
         const type = req.query.type as string | undefined;
         const includeInactive = req.query.includeInactive === 'true';
         
-        const outputs = await storage.getOutputChannels(userId, {
-          type,
-          includeInactive,
-        });
+        const outputs = await storage.getOutputChannels(userId);
         
         res.json({ outputs });
       } catch (error) {
@@ -109,7 +106,7 @@ export function registerOutputRoutes(router: Router) {
         }
         
         // Update output channel
-        const updatedOutput = await storage.updateOutputChannel(id, req.body);
+        const updatedOutput = await storage.updateOutputChannel(id, userId, req.body);
         
         res.json({
           success: true,
@@ -137,7 +134,7 @@ export function registerOutputRoutes(router: Router) {
           return res.status(404).json({ message: 'Output channel not found' });
         }
         
-        await storage.deleteOutputChannel(id);
+        await storage.deleteOutputChannel(id, userId);
         
         res.json({ success: true, message: 'Output channel deleted' });
       } catch (error) {
@@ -201,10 +198,9 @@ export function registerOutputRoutes(router: Router) {
           id,
           name: output.name,
           type: output.type,
-          deliveryCount: output.deliveryCount || 0,
-          errorCount: output.errorCount || 0,
-          lastDelivery: output.lastDelivery,
-          lastError: output.lastError,
+          totalDeliveries: output.totalDeliveries || 0,
+          failureCount: output.failureCount || 0,
+          lastUsed: output.lastUsed,
           isActive: output.isActive,
         });
       } catch (error) {
@@ -358,7 +354,7 @@ export function registerOutputRoutes(router: Router) {
           return res.status(404).json({ message: 'Output channel not found' });
         }
         
-        const logs = await storage.getDeliveryLogs({ outputChannelId: id, limit });
+        const logs = await storage.getDeliveryLogs(userId, limit);
         
         res.json({ logs });
       } catch (error) {

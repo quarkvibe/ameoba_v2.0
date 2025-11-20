@@ -525,7 +525,7 @@ export default function OutputConfiguration() {
                                 data-testid="textarea-output-template"
                               />
                               <p className="text-xs text-muted-foreground mt-1">
-                                Template for formatting the final output. Use {{field}} for variables.
+                                Template for formatting the final output. Use {`{{field}}`} for variables.
                               </p>
                             </div>
 

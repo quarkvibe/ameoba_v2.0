@@ -255,7 +255,7 @@ export default function ScheduleManager() {
                           <SelectValue placeholder="Select template" />
                         </SelectTrigger>
                         <SelectContent>
-                          {templates?.map((template: any) => (
+                          {(Array.isArray(templates) ? templates : []).map((template: any) => (
                             <SelectItem key={template.id} value={template.id}>
                               {template.name}
                             </SelectItem>

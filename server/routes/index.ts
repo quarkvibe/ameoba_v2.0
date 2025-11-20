@@ -25,22 +25,20 @@ import { registerApiKeyRoutes } from './apiKeys';
 import { registerReviewRoutes } from './reviews';
 import { registerEnvironmentRoutes } from './environment';
 import { registerSMSCommandRoutes } from './smsCommands';
-import { registerTestingRoutes } from './testing';
+// import { registerTestingRoutes } from './testing'; // DELETED - bloat
 import { registerDeploymentRoutes } from './deployment';
-import { registerCodeModificationRoutes } from './codeModification';
-import { registerReproductionRoutes } from './reproduction';
+// import { registerCodeModificationRoutes } from './codeModification'; // DELETED - bloat
+// import { registerReproductionRoutes } from './reproduction'; // DELETED - bloat
 
 /**
- * ROUTE REGISTRY (Cell Nucleus)
- * Central coordinator for all route organelles
+ * ROUTE REGISTRY
+ * Central coordinator for all route modules
  * 
- * Each route module is an independent organelle (ribosome) that:
+ * Each route module:
  * - Handles HTTP requests for its domain
- * - Contains ALL logic for that domain (CRUD, validation, error handling)
+ * - Contains all logic for that domain (CRUD, validation, error handling)
  * - Can be tested independently
  * - Can be evolved independently
- * 
- * This file coordinates them all into a cohesive organism.
  */
 
 export function registerRoutes(app: Express): Server {
@@ -83,11 +81,11 @@ export function registerRoutes(app: Express): Server {
   registerEnvironmentRoutes(apiRouter);    // Environment variable management (UI-based)
   registerSMSCommandRoutes(app);           // SMS command interface (webhook at root level)
   
-  // Testing & diagnostics
-  registerTestingRoutes(apiRouter);        // System testing, logs, diagnostics
+  // Deployment & diagnostics
   registerDeploymentRoutes(apiRouter);     // Deployment integration, DNS guidance
-  registerCodeModificationRoutes(apiRouter); // AI code modification (Phase 3 - self-modifying AI)
-  registerReproductionRoutes(apiRouter);   // Cellular mitosis (spawn children for efficiency)
+  // registerTestingRoutes - REMOVED (bloat)
+  // registerCodeModificationRoutes - REMOVED (bloat, will add simple version to aiAgent)
+  // registerReproductionRoutes - REMOVED (bloat)
   
   // =============================================================================
   // MOUNT API ROUTER

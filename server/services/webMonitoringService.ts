@@ -337,6 +337,24 @@ class WebMonitoringService extends EventEmitter {
   }
   
   /**
+   * Craigslist adapter (stub)
+   */
+  private async fetchCraigslist(task: MonitorTask, authSession: any): Promise<MonitoredItem[]> {
+    // TODO: Implement Craigslist scraping
+    activityMonitor.logActivity('warning', '⚠️ Craigslist adapter not yet implemented');
+    return [];
+  }
+  
+  /**
+   * Amazon adapter (stub)
+   */
+  private async fetchAmazon(task: MonitorTask, authSession: any): Promise<MonitoredItem[]> {
+    // TODO: Implement Amazon scraping
+    activityMonitor.logActivity('warning', '⚠️ Amazon adapter not yet implemented');
+    return [];
+  }
+  
+  /**
    * Generic site adapter (AI-powered)
    */
   private async fetchGeneric(task: MonitorTask, authSession: any): Promise<MonitoredItem[]> {

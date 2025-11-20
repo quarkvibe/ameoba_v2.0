@@ -1,38 +1,53 @@
-# Amoeba Architecture: Cellular Design
+# Amoeba Architecture
 
-> **"A simple blob with a million little cilia directing it wherever."**
-
-Amoeba follows biological cell organization. Each component has a specific function, communicates through well-defined interfaces, and can be replaced without disrupting the whole organism.
+**Simple, practical design. No over-engineering.**
 
 ---
 
-## 🧬 The Cell Structure
+## 🏗️ High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    CELL MEMBRANE (API Layer)                │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  Authentication │ Rate Limiting │ Validation         │   │
-│  └─────────────────────────────────────────────────────┘   │
-├─────────────────────────────────────────────────────────────┤
+│                    CLIENT INTERFACES                        │
 │                                                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-│  │ NUCLEUS  │  │ RIBOSOMES│  │  GOLGI   │  │MITOCHON- │  │
-│  │  (Core)  │  │ (Routes) │  │(Services)│  │DRIA (DB) │  │
-│  │          │  │          │  │          │  │          │  │
-│  │ Business │  │ HTTP     │  │ Content  │  │ Postgres │  │
-│  │ Logic    │  │ Handlers │  │ Gen      │  │ Storage  │  │
-│  │          │  │          │  │ Delivery │  │          │  │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  │
+│  React Dashboard  │  SMS Commands  │  CLI  │  API Client  │
 │                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │         CYTOPLASM (Shared Infrastructure)            │  │
-│  │  Encryption │ Validation │ Monitoring │ Queue        │  │
-│  └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    HTTP API LAYER (Express)                 │
 │                                                             │
-├─────────────────────────────────────────────────────────────┤
-│              CILIA (External Integrations)                  │
-│  OpenAI │ Anthropic │ Cohere │ Ollama │ SendGrid │ Stripe  │
+│  Auth │ Rate Limiting │ Validation │ Error Handling        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    BUSINESS LOGIC (Services)                │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │   Content    │  │ Data Sources │  │   Delivery   │     │
+│  │  Generation  │  │   Fetching   │  │ Multi-channel│     │
+│  └──────────────┘  └──────────────┘  └──────────────┘     │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │  Scheduling  │  │    Review    │  │  AI Agent    │     │
+│  │    (Cron)    │  │    Queue     │  │   Console    │     │
+│  └──────────────┘  └──────────────┘  └──────────────┘     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    DATA LAYER (Drizzle ORM)                 │
+│                                                             │
+│  PostgreSQL (Production)  │  SQLite (Development)          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│               EXTERNAL INTEGRATIONS (BYOK)                  │
+│                                                             │
+│  OpenAI │ Anthropic │ Twilio │ SendGrid │ Stripe          │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -40,291 +55,452 @@ Amoeba follows biological cell organization. Each component has a specific funct
 
 ## 📁 Directory Structure
 
-### The Organism
-
 ```
 server/
-├── index.ts                    # Cell initialization
-├── db.ts                       # Mitochondria connection
+├── index.ts                  # Server startup
+├── db.ts                     # Database connection
+├── storage.ts                # Data access layer
+├── routes.ts                 # Main route registration
 │
-├── routes/                     # RIBOSOMES (protein synthesis = request handling)
-│   ├── index.ts                # Route registry (70 lines)
-│   ├── licenses.ts             # License CRUD (150 lines)
-│   ├── ollama.ts               # Ollama management (120 lines)
-│   ├── payments.ts             # Stripe checkout (180 lines)
-│   ├── subscriptions.ts        # Subscription lifecycle (140 lines)
-│   ├── content.ts              # Content generation (200 lines)
-│   ├── templates.ts            # Template CRUD (180 lines)
-│   ├── dataSources.ts          # Data source management (160 lines)
-│   ├── outputs.ts              # Output channels (170 lines)
-│   ├── schedules.ts            # Scheduled jobs (150 lines)
-│   ├── credentials.ts          # BYOK AI/email (140 lines)
-│   ├── health.ts               # System health (80 lines)
-│   ├── agent.ts                # AI agent chat (100 lines)
-│   └── webhooks.ts             # External webhooks (60 lines)
+├── routes/                   # HTTP endpoints (17 modules)
+│   ├── agent.ts              # AI assistant
+│   ├── content.ts            # Generated content
+│   ├── templates.ts          # Content templates
+│   ├── dataSources.ts        # Data sources
+│   ├── outputs.ts            # Output channels
+│   ├── schedules.ts          # Scheduled jobs
+│   ├── reviews.ts            # Review queue
+│   ├── credentials.ts        # BYOK credentials
+│   ├── smsCommands.ts        # SMS control
+│   ├── health.ts             # Health checks
+│   └── ...                   # Supporting routes
 │
-├── services/                   # GOLGI APPARATUS (processing & packaging)
-│   ├── contentGenerationService.ts   # AI content generation
-│   ├── deliveryService.ts            # Content distribution
-│   ├── dataSourceService.ts          # Data fetching & parsing
-│   ├── licenseService.ts             # License management
-│   ├── stripeService.ts              # Payment processing
-│   ├── ollamaService.ts              # Local AI models
-│   ├── aiAgent.ts                    # Natural language control
-│   ├── encryptionService.ts          # Data protection
-│   ├── emailService.ts               # Email delivery
-│   ├── cronService.ts                # Scheduled execution
-│   ├── activityMonitor.ts            # Real-time logging
-│   ├── commandExecutor.ts            # Terminal commands
-│   ├── systemReadiness.ts            # Health checks
-│   ├── queueService.ts               # Background jobs
-│   └── integrationService.ts         # API key management
+├── services/                 # Business logic (19 services)
+│   ├── contentGenerationService.ts  # AI generation
+│   ├── dataSourceService.ts         # Data fetching
+│   ├── deliveryService.ts           # Multi-channel delivery
+│   ├── cronService.ts               # Scheduling
+│   ├── reviewQueueService.ts        # Review workflow
+│   ├── aiAgent.ts                   # AI assistant
+│   ├── smsService.ts                # SMS delivery
+│   ├── voiceService.ts              # Voice calls
+│   ├── socialMediaService.ts        # Social posting
+│   └── ...                          # Supporting services
 │
-├── middleware/                 # CELL MEMBRANE (protection & filtering)
-│   ├── errorHandler.ts         # Centralized error handling
-│   ├── validation.ts           # Request validation
-│   └── rateLimiter.ts          # Rate limiting
+├── middleware/               # Request processing
+│   ├── errorHandler.ts       # Error handling
+│   ├── rateLimiter.ts        # Rate limiting
+│   └── validation.ts         # Request validation
 │
-├── validation/                 # DNA (schemas & rules)
-│   ├── monetization.ts         # License & payment schemas
-│   ├── ollama.ts               # Ollama validation
-│   ├── content.ts              # Content generation schemas
-│   └── common.ts               # Shared validation utilities
-│
-├── storage.ts                  # MITOCHONDRIA (energy = data)
-├── replitAuth.ts               # Membrane receptor (auth)
-└── vite.ts                     # Membrane pore (static assets)
+└── storage/                  # Database adapters
+    ├── IStorage.ts           # Storage interface
+    ├── PostgresAdapter.ts    # PostgreSQL
+    └── SQLiteAdapter.ts      # SQLite
+
+client/
+├── src/
+│   ├── components/
+│   │   ├── dashboard/        # Dashboard UI (35 components)
+│   │   └── ui/               # Reusable UI (48 components)
+│   ├── pages/                # Main pages
+│   ├── hooks/                # React hooks
+│   └── contexts/             # React contexts
 
 shared/
-└── schema.ts                   # NUCLEUS (core data models)
-
-client/                         # EXTERNAL ENVIRONMENT (UI)
-└── src/
-    ├── components/dashboard/   # Visual cilia
-    ├── contexts/               # Signal transduction
-    └── hooks/                  # Cellular receptors
+└── schema.ts                 # Database schema (single source of truth)
 ```
 
 ---
 
-## 🧪 Design Principles
+## 🔌 Core Services Explained
 
-### 1. **DNA Philosophy: Information Density**
+### 1. Content Generation Service
+**Purpose**: Generate content with AI
 
-> *"DNA is the most complex molecule in the universe, but the information is so dense that if one thing is wrong, it breaks the system. That's what we're aiming for."*
+**Flow**:
+```
+Template + Data Source → AI Provider → Quality Check → Content
+```
 
-Every file follows:
-- **Complete, not constrained** (200 lines is a target, not a limit)
-- **One purpose** (single responsibility)
-- **Maximum information density** (every line serves a purpose)
-- **Precision over brevity** (better 300 robust lines than 3 fragile files)
-- **Clear naming** (no abbreviations)
-- **No nesting > 3 levels** (flat is better)
+**Supports**:
+- OpenAI (GPT-4, GPT-4o, GPT-4o-mini)
+- Anthropic (Claude 3.5 Sonnet, Opus)
+- Cohere
+- Ollama (local, FREE!)
 
-**The Rule**: An organelle can be as large as it needs to be to fulfill its purpose completely and correctly. Split only when responsibilities diverge, never for arbitrary size limits.
+### 2. Data Source Service
+**Purpose**: Fetch data from external sources
 
-### 2. **Cellular Isolation**
+**Supports**:
+- RSS feeds
+- JSON APIs
+- Web scraping (with auth)
+- Static data files
 
-Each organelle can be:
-- **Tested independently**
-- **Replaced without surgery**
-- **Understood in isolation**
-- **Evolved separately**
+**Flow**:
+```
+Fetch → Parse → Transform → Inject into template variables
+```
 
-### 3. **Interface Contracts**
+### 3. Delivery Service
+**Purpose**: Deliver content via multiple channels
 
-Communication happens through:
-- **TypeScript interfaces** (compile-time contracts)
-- **Zod schemas** (runtime validation)
-- **Clear return types** (no `any`)
+**Channels**:
+- Email (SendGrid, AWS SES)
+- SMS (Twilio)
+- Voice (Twilio TTS)
+- Webhooks (POST to any URL)
+- Social Media (Twitter, LinkedIn, etc.)
+- API (store for retrieval)
+
+**Flow**:
+```
+Content → Format for channel → Deliver → Track status
+```
+
+### 4. Cron Service
+**Purpose**: Schedule automated generation
+
+**Features**:
+- Cron expression support
+- Timezone handling
+- Next run calculation
+- Execution history
+
+### 5. Review Queue Service
+**Purpose**: Human approval workflow
+
+**Features**:
+- Pending items queue
+- Auto-approval rules
+- Bulk operations
+- Audit trail
+
+### 6. AI Agent Service
+**Purpose**: Natural language control & assistance
+
+**Current**:
+- Understand commands
+- Execute system operations
+- Provide suggestions
+
+**Future** (to be added):
+- Modify Amoeba's code
+- Add new features
+- Fix bugs
+- Generate integrations
 
 ---
 
-## 🔬 Component Responsibilities
+## 🗄️ Database Schema
 
-### **NUCLEUS** (`shared/schema.ts`)
-- **Role**: Genetic code, core data models
-- **Contains**: Database schema, types, validation
-- **Size**: 1 file, ~1000 lines (exception: it's the genome)
-- **Rule**: All data structures defined here
+### Core Tables (11)
+1. **users** - User accounts
+2. **contentTemplates** - AI generation instructions
+3. **dataSources** - External data sources
+4. **outputChannels** - Delivery channels
+5. **scheduledJobs** - Cron automation
+6. **generatedContent** - Content history
+7. **templateDataSources** - Template ↔ Source links
+8. **templateOutputChannels** - Template ↔ Output links
+9. **distributionRules** - Conditional routing
+10. **aiCredentials** - BYOK AI provider keys (encrypted)
+11. **emailServiceCredentials** - BYOK email keys (encrypted)
+12. **phoneServiceCredentials** - BYOK phone keys (encrypted)
 
-### **RIBOSOMES** (`server/routes/`)
-- **Role**: Protein synthesis = HTTP request handling
-- **Contains**: Express route handlers
-- **Size**: 14 files, 150-200 lines each
-- **Rule**: No business logic, only HTTP → service calls
-
-### **GOLGI APPARATUS** (`server/services/`)
-- **Role**: Processing, packaging, distribution
-- **Contains**: All business logic
-- **Size**: 15+ files, 200-400 lines each
-- **Rule**: Pure functions, testable, no HTTP knowledge
-
-### **MITOCHONDRIA** (`server/storage.ts` + `server/db.ts`)
-- **Role**: Energy production = data persistence
-- **Contains**: Database queries, Drizzle ORM
-- **Size**: 2 files, storage.ts ~800 lines (getting large)
-- **Rule**: Only SQL/ORM queries, no business logic
-
-### **CELL MEMBRANE** (`server/middleware/`)
-- **Role**: Protection, filtering, selective permeability
-- **Contains**: Auth, rate limiting, validation
-- **Size**: 3 files, 100-150 lines each
-- **Rule**: Reusable, composable, no side effects
-
-### **DNA** (`server/validation/`)
-- **Role**: Instructions for protein synthesis
-- **Contains**: Zod schemas for validation
-- **Size**: 4-5 files, 50-100 lines each
-- **Rule**: Pure schemas, no logic
-
-### **CYTOPLASM** (Utilities, helpers)
-- **Role**: Medium for chemical reactions
-- **Contains**: Shared utilities, constants
-- **Size**: Multiple small files
-- **Rule**: No state, pure functions
-
-### **CILIA** (External integrations)
-- **Role**: Movement, sensing environment
-- **Contains**: API clients (OpenAI, Stripe, etc.)
-- **Size**: Embedded in services
-- **Rule**: Isolated, replaceable
+### Supporting Tables (8)
+- **licenses** - License management
+- **subscriptions** - Subscription tracking
+- **stripeCustomers** - Stripe integration
+- **payments** - Payment history
+- **apiKeys** - API access keys
+- **webhooks** - Webhook configurations
+- **integrationLogs** - Integration monitoring
+- **agentConversations** - AI agent chat history
 
 ---
 
-## 🧬 Example: Content Generation Flow
+## 🔄 Data Flow Examples
 
-```typescript
-// 1. REQUEST enters through MEMBRANE
-POST /api/content/generate
-  ↓
-// 2. MEMBRANE filters & validates
-middleware: [isAuthenticated, aiGenerationRateLimit, validateBody(schema)]
-  ↓
-// 3. RIBOSOME receives request
-routes/content.ts → async (req, res) => { ... }
-  ↓
-// 4. GOLGI processes
-contentGenerationService.generate(params)
-  ↓
-// 5. CILIA reach out (AI APIs)
-OpenAI/Anthropic/Cohere/Ollama API call
-  ↓
-// 6. MITOCHONDRIA stores result
-storage.createGeneratedContent(result)
-  ↓
-// 7. GOLGI packages for delivery
-deliveryService.deliver(content)
-  ↓
-// 8. Response exits through MEMBRANE
-res.json({ success, data })
+### Example 1: Generate & Deliver Content
+
+```
+1. User creates template
+   ↓
+2. (Optional) Adds data source
+   ↓
+3. (Optional) Schedules with cron
+   ↓
+4. System fetches data from source
+   ↓
+5. AI generates content
+   ↓
+6. Quality check (score 0-100)
+   ↓
+7. (Optional) Human reviews and approves
+   ↓
+8. Deliver via output channels
+   ↓
+9. Track delivery status
+   ↓
+10. Store in content history
 ```
 
----
+### Example 2: SMS Command Control
 
-## 🔄 Migration Path
-
-### Phase 1: Split Routes (Now)
-```bash
-server/routes.ts (1685 lines)
-  → server/routes/*.ts (10-14 files, complete implementations)
-  
-Each route file contains ALL logic for its domain:
-- Full CRUD operations
-- All validation
-- All error handling
-- Complete middleware chains
-- Comprehensive comments
-
-Size doesn't matter. Completeness does.
+```
+1. User texts "generate newsletter"
+   ↓
+2. SMS received via Twilio webhook
+   ↓
+3. smsCommandService authenticates sender
+   ↓
+4. Parses command ("generate newsletter")
+   ↓
+5. Finds newsletter template
+   ↓
+6. Triggers content generation
+   ↓
+7. AI generates content
+   ↓
+8. Delivers via configured channels
+   ↓
+9. Replies to user: "✅ Done! Q: 92/100"
 ```
 
-### Phase 2: Extract Storage Queries (Later)
-```bash
-server/storage.ts (800 lines)
-  → server/repositories/*.ts (licenses, content, users, etc.)
-```
+### Example 3: Scheduled Automation
 
-### Phase 3: Modularize Services (Ongoing)
-```bash
-Keep services focused, split if > 400 lines
 ```
-
-### Phase 4: Add Tests (Continuous)
-```bash
-Each organelle gets its own test file
+1. User creates scheduled job
+   ↓
+2. cronService calculates next run
+   ↓
+3. At scheduled time, cronService triggers job
+   ↓
+4. Fetches template and data source
+   ↓
+5. Generates content
+   ↓
+6. Delivers automatically
+   ↓
+7. Updates job history
+   ↓
+8. Calculates next run
 ```
 
 ---
 
-## 🎯 Rules of Evolution
+## 🔐 Security Architecture
 
-### ✅ DO
-- **Split when responsibilities diverge** (not by line count)
-- **One file per domain** (licenses, payments, content, etc.)
-- **Complete implementations** (all CRUD, validation, error handling)
-- **Information density** (every line serves a clear purpose)
-- **Test each organelle independently**
-- **Use dependency injection**
-- **Document interfaces**
-- **Prioritize correctness over size**
+### Encryption
+- **At Rest**: All API keys encrypted with AES-256-GCM
+- **In Transit**: HTTPS for all API calls
+- **In Memory**: Decrypted only when needed, immediately cleared
 
-### ❌ DON'T
-- **Create circular dependencies**
-- **Mix concerns (HTTP + business logic)**
-- **Create deep hierarchies**
-- **Use global state**
-- **Skip validation**
+### Authentication
+- **Dashboard**: Replit Auth (OAuth)
+- **API**: API key or session-based
+- **SMS**: Phone number whitelist
+- **CLI**: Local config file
+
+### Rate Limiting
+- **Generous**: 100 req/min for reads
+- **Standard**: 30 req/min for writes
+- **Strict**: 10 req/min for generation
+
+---
+
+## 📊 Performance Characteristics
+
+### Response Times (Target)
+- Health check: < 10ms
+- List operations: < 50ms
+- Create operations: < 100ms
+- AI generation: 2-10 seconds (depends on AI provider)
+- Delivery: 1-5 seconds per channel
+
+### Scalability
+- **SQLite**: Good for 1-10 users, < 1M records
+- **PostgreSQL**: Scales to millions of records
+- **Horizontal**: Can run multiple instances (disable cron on replicas)
+
+### Resource Usage
+- **Memory**: 100-500MB typical
+- **CPU**: Low (< 5%) except during AI generation
+- **Storage**: ~1KB per generated content item
 
 ---
 
 ## 🧪 Testing Strategy
 
-Each organelle is testable:
+### Unit Tests
+- Each service tested independently
+- Mock external dependencies
+- Test business logic
 
-```typescript
-// Test RIBOSOME (route)
-import { registerLicenseRoutes } from './routes/licenses';
-// Mock services, test HTTP behavior
+### Integration Tests
+- Test full workflows
+- Use test database
+- Verify multi-service interactions
 
-// Test GOLGI (service)
-import { licenseService } from './services/licenseService';
-// Mock storage, test business logic
+### E2E Tests
+- Test user workflows
+- Verify UI functionality
+- Test API endpoints
 
-// Test MITOCHONDRIA (storage)
-import { storage } from './storage';
-// Use test database, test queries
+**Target**: 80% code coverage
+
+---
+
+## 🚀 Deployment Options
+
+### Development (SQLite)
+```bash
+npm run dev
+# Automatic SQLite database
+# Works immediately
 ```
 
----
+### Production (PostgreSQL)
+```bash
+# Set environment variables
+DATABASE_TYPE=postgres
+DATABASE_URL=postgresql://...
+ENCRYPTION_KEY=<generated>
 
-## 📊 Metrics
+# Run
+npm run build
+npm start
+```
 
-Track architectural health:
+### Docker
+```bash
+docker-compose up -d
+# PostgreSQL + Amoeba in containers
+```
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| Single responsibility | 100% | Mixed | 🔴 |
-| Information density | High | Medium | 🟡 |
-| Circular deps | 0 | ? | 🟡 |
-| Test coverage | 80% | 0% | 🔴 |
-| Type safety | 100% | ~95% | 🟡 |
-| Route modularity | By domain | Monolithic | 🔴 |
-| Complete implementations | 100% | Partial | 🟡 |
-
----
-
-## 🚀 Next Steps
-
-1. **Refactor `routes.ts`** → 14 modular files
-2. **Add route tests** → Each route file gets `.test.ts`
-3. **Extract repositories** → Split `storage.ts` by domain
-4. **Document interfaces** → TypeDoc for all services
-5. **Add health checks** → Per-organelle status
+### Cloud Deployment
+- **Vercel/Netlify**: Frontend only, API elsewhere
+- **AWS/DigitalOcean**: Full stack deployment
+- **Heroku/Render**: Simple deployment
 
 ---
 
-**Remember**: The organism grows by adding cilia (features), not by making existing organelles larger. Each new feature gets its own file, its own test, its own documentation.
+## 🔧 Development Guidelines
 
-**Architecture is not abstract—it's the difference between a single-celled amoeba and a million-celled organism that still behaves like one.** 🦠
+### Code Organization
+- **Routes**: HTTP handling only, no business logic
+- **Services**: All business logic, pure functions
+- **Storage**: Database queries only, no business logic
+- **Middleware**: Reusable, composable, no side effects
 
+### Naming Conventions
+- Files: camelCase.ts
+- Services: SomethingService class
+- Routes: register*Routes functions
+- Database: snake_case tables
+
+### Dependencies
+- Keep minimal
+- Prefer standard libraries
+- Document why each dependency exists
+- Review before adding new ones
+
+### TypeScript
+- Strict mode enabled
+- No `any` types (except where necessary)
+- Explicit return types
+- Interfaces for all external contracts
+
+---
+
+## 📈 Scaling Considerations
+
+### Single Instance (Most Users)
+- SQLite or PostgreSQL
+- Handles 1-100 users
+- 1-1000 generations/day
+- < $50/month costs
+
+### Multi-Instance (Growth)
+- PostgreSQL with connection pooling
+- Multiple app servers behind load balancer
+- Shared database
+- Disable cron on replicas (run on single instance)
+- Redis for session storage (optional)
+
+### Enterprise (Large Scale)
+- PostgreSQL with read replicas
+- Horizontal scaling with K8s
+- CDN for frontend
+- Separate worker instances for generation
+- Redis for caching
+
+---
+
+## 🎯 Design Decisions
+
+### Why Express?
+- Battle-tested
+- Large ecosystem
+- Simple and clear
+- Easy to understand
+
+### Why Drizzle ORM?
+- Type-safe
+- Minimal abstraction
+- SQL-like syntax
+- Great TypeScript support
+
+### Why React?
+- Industry standard
+- Large ecosystem
+- Good developer experience
+- Easy to hire for
+
+### Why PostgreSQL?
+- Excellent JSON support
+- ACID compliance
+- Mature and stable
+- Free tier available (Neon.tech)
+
+### Why Not MongoDB/etc?
+- PostgreSQL does everything we need
+- Simpler to have one database type
+- Can always add adapters later if needed
+
+---
+
+## 🔮 Future Enhancements
+
+### Short-term
+- Enhanced AI agent with code modification
+- More delivery channels (Discord, Slack)
+- Template marketplace
+
+### Long-term
+- Plugin system
+- Multi-tenancy support
+- Advanced analytics
+- A/B testing
+
+**But only if users actually need them.**  
+**Simplicity first.**
+
+---
+
+## 📝 Principles
+
+1. **Simple over complex** - Clear code beats clever code
+2. **Explicit over implicit** - No magic, no surprises
+3. **Standard over custom** - Use proven patterns
+4. **Maintainable over perfect** - Code that others can understand
+5. **Practical over theoretical** - Build what users actually need
+
+---
+
+**Architecture is not about being clever. It's about being clear.**
+
+That's Amoeba's architecture. Simple. Practical. Works.
+
+🦠

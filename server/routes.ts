@@ -10,16 +10,15 @@ import {
   insertScheduledJobSchema,
   insertGeneratedContentSchema,
 } from "@shared/schema";
-import { queueService } from "./services/queueService";
-import { emailService } from "./services/emailService";
+// import { queueService } from "./services/queueService"; // REMOVED - bloat
+// import { emailService } from "./services/emailService"; // REMOVED - use deliveryService
 import { aiAgent } from "./services/aiAgent";
-// premiumEmailService removed - generic delivery service will replace it
 import { cronService } from "./services/cronService";
 import { integrationService } from "./services/integrationService";
 import { WebSocketServer, WebSocket } from "ws";
 import { activityMonitor } from "./services/activityMonitor";
 import { commandExecutor } from "./services/commandExecutor";
-import { systemReadinessService } from "./services/systemReadiness";
+// import { systemReadinessService } from "./services/systemReadiness"; // REMOVED - bloat
 import { contentGenerationService } from "./services/contentGenerationService";
 import { deliveryService } from "./services/deliveryService";
 import { dataSourceService } from "./services/dataSourceService";
@@ -111,18 +110,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Health check endpoint (public)
+  // Health check endpoint (public) - Simple version
   app.get("/api/health", async (req, res) => {
     try {
-      const quickHealth = await systemReadinessService.getQuickHealth();
+      // Simple health check - just verify DB connection
+      const dbHealth = await storage.healthCheck();
       res.json({
-        status: quickHealth.status,
-        icon: quickHealth.icon,
-        message: quickHealth.message,
+        status: dbHealth.healthy ? "healthy" : "degraded",
+        icon: dbHealth.healthy ? "🟢" : "🔴",
+        message: dbHealth.message || "System operational",
         timestamp: new Date().toISOString(),
-        service: "Amoeba AI Content Generation Platform",
+        service: "Amoeba AI Platform",
         version: "2.0.0",
-        platform: "universal_content_generator"
       });
     } catch (error) {
       console.error("Health check error:", error);
@@ -133,215 +132,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // System readiness check (authenticated) - 🟢🟡🔴 Traffic Light System
+  // System readiness check (authenticated) - Simplified
   app.get("/api/system/readiness", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const readiness = await systemReadinessService.getReadiness(userId);
-      res.json(readiness);
+      const dbHealth = await storage.healthCheck();
+      res.json({
+        status: dbHealth.healthy ? "ready" : "degraded",
+        database: dbHealth,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error) {
       console.error("Readiness check error:", error);
       res.status(500).json({ message: "Failed to check system readiness" });
     }
   });
 
-  // Dashboard metrics
-  app.get("/api/dashboard/metrics", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const metrics = await storage.getEmailMetrics(userId);
-      res.json(metrics);
-    } catch (error) {
-      console.error("Error fetching dashboard metrics:", error);
-      res.status(500).json({ message: "Failed to fetch metrics" });
-    }
-  });
-
   // =============================================================================
-  // CAMPAIGN MANAGEMENT (Auth Required)
+  // LEGACY ROUTES REMOVED - AMOEBA AI PLATFORM
   // =============================================================================
-
-  // Get all campaigns
-  app.get("/api/campaigns", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const campaigns = await storage.getCampaigns(userId);
-      res.json(campaigns);
-    } catch (error) {
-      console.error("Error fetching campaigns:", error);
-      res.status(500).json({ message: "Failed to fetch campaigns" });
-    }
-  });
-
-  // Create a new campaign
-  app.post("/api/campaigns", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const campaign = await storage.createCampaign({ ...req.body, userId });
-      res.status(201).json(campaign);
-    } catch (error) {
-      console.error("Error creating campaign:", error);
-      res.status(500).json({ message: "Failed to create campaign" });
-    }
-  });
-
-  // Update campaign
-  app.put("/api/campaigns/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const campaign = await storage.updateCampaign(req.params.id, userId, req.body);
-      if (!campaign) {
-        return res.status(404).json({ message: "Campaign not found" });
-      }
-      res.json(campaign);
-    } catch (error) {
-      console.error("Error updating campaign:", error);
-      res.status(500).json({ message: "Failed to update campaign" });
-    }
-  });
-
-  // Delete campaign
-  app.delete("/api/campaigns/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      await storage.deleteCampaign(req.params.id, userId);
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting campaign:", error);
-      res.status(500).json({ message: "Failed to delete campaign" });
-    }
-  });
-
+  // Removed:
+  // - Dashboard metrics (getEmailMetrics) - use templates/generated content stats instead
+  // - Campaign management (/api/campaigns/*) - use content templates instead
+  // - Email management (/api/emails/*) - use output channels for email delivery
+  // - Queue management (/api/queue/*) - Amoeba executes directly via scheduled jobs
+  //
+  // Amoeba Core Features:
+  // - Content Templates (/api/templates/*)
+  // - Data Sources (/api/data-sources/*)
+  // - Output Channels (/api/outputs/*) - includes email delivery
+  // - Scheduled Jobs (/api/schedules/*)
+  // - Generated Content (/api/content/*)
   // =============================================================================
-  // EMAIL MANAGEMENT (Auth Required)
-  // =============================================================================
-
-  // Send email
-  app.post("/api/emails/send", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const result = await emailService.sendEmail(req.body, userId);
-      res.json(result);
-    } catch (error) {
-      console.error("Error sending email:", error);
-      res.status(500).json({ message: "Failed to send email" });
-    }
-  });
-
-  // Get email providers
-  app.get("/api/emails/providers", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const providers = await storage.getEmailConfigurations(userId);
-      res.json(providers);
-    } catch (error) {
-      console.error("Error fetching email providers:", error);
-      res.status(500).json({ message: "Failed to fetch email providers" });
-    }
-  });
-
-  // Create/update email provider
-  app.post("/api/emails/providers", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const provider = await storage.createEmailConfiguration({ ...req.body, userId });
-      res.status(201).json(provider);
-    } catch (error) {
-      console.error("Error creating email provider:", error);
-      res.status(500).json({ message: "Failed to create email provider" });
-    }
-  });
-
-  // =============================================================================
-  // QUEUE MANAGEMENT (Auth Required)
-  // =============================================================================
-
-  // Get queue metrics
-  app.get("/api/queue/metrics", async (req, res) => {
-    try {
-      const metrics = await queueService.getMetrics();
-      res.json(metrics);
-    } catch (error) {
-      console.error("Error fetching queue metrics:", error);
-      res.status(500).json({ message: "Failed to fetch queue metrics" });
-    }
-  });
-
-  // Get queue jobs
-  app.get("/api/queue/jobs", isAuthenticated, async (req, res) => {
-    try {
-      const { status, limit = 50 } = req.query;
-      const jobs = await storage.getQueueJobs(status as string, parseInt(limit as string));
-      res.json(jobs);
-    } catch (error) {
-      console.error("Error fetching queue jobs:", error);
-      res.status(500).json({ message: "Failed to fetch queue jobs" });
-    }
-  });
-
-  // Add job to queue
-  app.post("/api/queue/jobs", isAuthenticated, async (req, res) => {
-    try {
-      const job = await queueService.addJob(req.body);
-      res.status(201).json(job);
-    } catch (error) {
-      console.error("Error adding job to queue:", error);
-      res.status(500).json({ message: "Failed to add job to queue" });
-    }
-  });
-
-  // Retry failed job
-  app.post("/api/queue/jobs/:id/retry", isAuthenticated, async (req, res) => {
-    try {
-      // Reset job status to pending and reset attempts
-      await storage.updateQueueJob(req.params.id, {
-        status: 'pending',
-        attempts: 0,
-        error: null,
-      });
-      res.json({ message: 'Job queued for retry' });
-    } catch (error) {
-      console.error("Error retrying job:", error);
-      res.status(500).json({ message: "Failed to retry job" });
-    }
-  });
-
-  // Cancel job
-  app.delete("/api/queue/jobs/:id", isAuthenticated, async (req, res) => {
-    try {
-      await storage.updateQueueJob(req.params.id, {
-        status: 'failed',
-        error: 'Cancelled by user',
-      });
-      res.status(204).send();
-    } catch (error) {
-      console.error("Error canceling job:", error);
-      res.status(500).json({ message: "Failed to cancel job" });
-    }
-  });
-
-  // Pause/resume queue
-  app.post("/api/queue/pause", isAuthenticated, async (req, res) => {
-    try {
-      // Queue service doesn't have pause - it processes automatically
-      // This is a stub endpoint for future implementation
-      res.json({ message: "Queue paused successfully (stub)" });
-    } catch (error) {
-      console.error("Error pausing queue:", error);
-      res.status(500).json({ message: "Failed to pause queue" });
-    }
-  });
-
-  app.post("/api/queue/resume", isAuthenticated, async (req, res) => {
-    try {
-      // Queue service doesn't have resume - it processes automatically
-      // This is a stub endpoint for future implementation
-      res.json({ message: "Queue resumed successfully (stub)" });
-    } catch (error) {
-      console.error("Error resuming queue:", error);
-      res.status(500).json({ message: "Failed to resume queue" });
-    }
-  });
 
   // =============================================================================
   // AI AGENT (Auth Required)
@@ -392,42 +213,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // =============================================================================
   // ANALYTICS & REPORTING (Auth Required)
   // =============================================================================
-
-  // Get email analytics
-  app.get("/api/analytics/emails", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { startDate, endDate } = req.query;
-      const analytics = await storage.getEmailMetrics(
-        userId,
-        startDate ? new Date(startDate as string) : undefined,
-        endDate ? new Date(endDate as string) : undefined
-      );
-      res.json(analytics);
-    } catch (error) {
-      console.error("Error fetching email analytics:", error);
-      res.status(500).json({ message: "Failed to fetch email analytics" });
-    }
-  });
-
-  // Get campaign performance
-  app.get("/api/analytics/campaigns/:id", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      // Stub - return basic campaign stats from email logs
-      const campaign = await storage.getCampaign(req.params.id, userId);
-      if (!campaign) {
-        return res.status(404).json({ message: 'Campaign not found' });
-      }
-      res.json({ 
-        campaign,
-        stats: { sent: 0, delivered: 0, bounced: 0, failed: 0 }
-      });
-    } catch (error) {
-      console.error("Error fetching campaign analytics:", error);
-      res.status(500).json({ message: "Failed to fetch campaign analytics" });
-    }
-  });
+  // NOTE: Legacy email/campaign analytics removed.
+  // For Amoeba analytics, use:
+  // - /api/content/* for generated content stats
+  // - /api/templates/:id/stats for template usage
+  // - /api/integrations/logs for delivery tracking
+  // =============================================================================
 
   // =============================================================================
   // SYSTEM CONFIGURATION (Auth Required)

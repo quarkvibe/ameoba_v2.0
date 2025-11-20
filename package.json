@@ -1,28 +1,28 @@
 {
   "name": "amoeba-cli",
   "version": "1.0.0",
-  "description": "Universal Application Assembler - Self-evolving AI platform that adapts to any use case with BYOK",
+  "description": "AI content generation platform with multi-channel delivery, SMS control, and BYOK. Self-hosted and simple.",
   "keywords": [
     "ai",
-    "application-assembler",
-    "self-modifying",
+    "content-generation",
     "openai",
     "anthropic",
     "automation",
-    "workflow",
+    "sms-control",
+    "multi-channel-delivery",
     "cli",
     "byok",
     "ai-platform",
     "self-hosted",
-    "universal-platform"
+    "content-automation"
   ],
-  "homepage": "https://github.com/quarkvibe/Ameoba#readme",
+  "homepage": "https://github.com/quarkvibe/ameoba_v2.0#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/quarkvibe/Ameoba.git"
+    "url": "git+https://github.com/quarkvibe/ameoba_v2.0.git"
   },
   "bugs": {
-    "url": "https://github.com/quarkvibe/Ameoba/issues"
+    "url": "https://github.com/quarkvibe/ameoba_v2.0/issues"
   },
   "author": "QuarkVibe Inc.",
   "contributors": [],

@@ -160,10 +160,7 @@ export function registerSMSCommandRoutes(app: Express) {
         messageSid: 'test_' + Date.now(),
       });
       
-      res.json({
-        success: true,
-        ...result,
-      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

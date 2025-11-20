@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Router } from "express";
 import { reviewQueueService } from "../services/reviewQueueService";
 
 /**
@@ -6,7 +6,8 @@ import { reviewQueueService } from "../services/reviewQueueService";
  * Manages human review workflow for AI-generated content
  */
 
-export function registerReviewRoutes(app: Express) {
+export function registerReviewRoutes(router: Router) {
+  const app = router; // Alias for minimal code changes
   const isAuthenticated = (req: any, res: any, next: any) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
       return next();

@@ -217,7 +217,7 @@ class AuthenticationVaultService {
    * Delete auth profile
    */
   async deleteProfile(profileId: string, userId: string): Promise<void> {
-    await storage.deleteAuthProfile(profileId, userId);
+    await storage.deleteAuthProfile(profileId);
     activityMonitor.logActivity('info', `🗑️ Deleted auth profile: ${profileId}`);
   }
 }

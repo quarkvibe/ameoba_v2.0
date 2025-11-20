@@ -121,7 +121,7 @@ export default function DataSourceManager() {
   const testSourceMutation = useMutation<TestResult, Error, Partial<DataSource>>({
     mutationFn: async (sourceConfig: Partial<DataSource>) => {
       const response = await apiRequest("POST", "/api/datasources/test", sourceConfig);
-      return response as TestResult;
+      return response as unknown as TestResult;
     },
     onSuccess: (result: TestResult) => {
       setTestResult(result);

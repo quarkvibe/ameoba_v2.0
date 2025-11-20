@@ -122,7 +122,11 @@ export function registerCredentialRoutes(router: Router) {
         }
         
         // Update (only provided fields)
-        const updated = await storage.updateAiCredential(id, req.body);
+        const updated = await storage.updateAiCredential(id, userId, req.body);
+        
+        if (!updated) {
+          return res.status(404).json({ message: 'Credential not found' });
+        }
         
         // Mask API key in response
         res.json({
@@ -151,7 +155,7 @@ export function registerCredentialRoutes(router: Router) {
           return res.status(404).json({ message: 'Credential not found' });
         }
         
-        await storage.deleteAiCredential(id);
+        await storage.deleteAiCredential(id, userId);
         
         res.json({ success: true, message: 'Credential deleted' });
       } catch (error) {
@@ -318,7 +322,11 @@ export function registerCredentialRoutes(router: Router) {
         }
         
         // Update
-        const updated = await storage.updateEmailServiceCredential(id, req.body);
+        const updated = await storage.updateEmailServiceCredential(id, userId, req.body);
+        
+        if (!updated) {
+          return res.status(404).json({ message: 'Credential not found' });
+        }
         
         // Mask sensitive fields
         res.json({
@@ -348,7 +356,7 @@ export function registerCredentialRoutes(router: Router) {
           return res.status(404).json({ message: 'Credential not found' });
         }
         
-        await storage.deleteEmailServiceCredential(id);
+        await storage.deleteEmailServiceCredential(id, userId);
         
         res.json({ success: true, message: 'Credential deleted' });
       } catch (error) {

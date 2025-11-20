@@ -66,10 +66,7 @@ export function registerScheduleRoutes(router: Router) {
         const includeInactive = req.query.includeInactive === 'true';
         const templateId = req.query.templateId as string | undefined;
         
-        const jobs = await storage.getScheduledJobs(userId, {
-          includeInactive,
-          templateId,
-        });
+        const jobs = await storage.getScheduledJobs(userId);
         
         res.json({ jobs });
       } catch (error) {
@@ -126,7 +123,11 @@ export function registerScheduleRoutes(router: Router) {
         }
         
         // Update job
-        const updatedJob = await storage.updateScheduledJob(id, req.body);
+        const updatedJob = await storage.updateScheduledJob(id, userId, req.body);
+        
+        if (!updatedJob) {
+          return res.status(404).json({ message: 'Scheduled job not found' });
+        }
         
         activityMonitor.logActivity('info', `📅 Scheduled job updated: ${updatedJob.name}`);
         
@@ -156,7 +157,7 @@ export function registerScheduleRoutes(router: Router) {
           return res.status(404).json({ message: 'Scheduled job not found' });
         }
         
-        await storage.deleteScheduledJob(id);
+        await storage.deleteScheduledJob(id, userId);
         
         activityMonitor.logActivity('info', `📅 Scheduled job deleted: ${job.name}`);
         
@@ -184,9 +185,13 @@ export function registerScheduleRoutes(router: Router) {
         }
         
         // Toggle active state
-        const updatedJob = await storage.updateScheduledJob(id, {
+        const updatedJob = await storage.updateScheduledJob(id, userId, {
           isActive: !job.isActive,
         });
+        
+        if (!updatedJob) {
+          return res.status(404).json({ message: 'Scheduled job not found' });
+        }
         
         activityMonitor.logActivity(
           'info', 
@@ -290,7 +295,7 @@ export function registerScheduleRoutes(router: Router) {
           errorCount: job.errorCount || 0,
           lastRun: job.lastRun,
           nextRun: job.nextRun,
-          status: job.status,
+          lastStatus: job.lastStatus,
         });
       } catch (error) {
         console.error('Error fetching job stats:', error);

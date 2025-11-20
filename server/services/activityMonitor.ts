@@ -147,6 +147,21 @@ export class ActivityMonitor extends EventEmitter {
   getClientCount(): number {
     return this.clients.size;
   }
+
+  /**
+   * Unregister a WebSocket client
+   */
+  unregisterClient(ws: WebSocket): void {
+    this.clients.delete(ws);
+  }
+
+  /**
+   * Get recent logs (stub for now)
+   */
+  getRecentLogs(limit: number = 100): any[] {
+    // TODO: Implement log storage/retrieval
+    return [];
+  }
 }
 
 export const activityMonitor = new ActivityMonitor();

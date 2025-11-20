@@ -306,8 +306,7 @@ export class ContentGenerationService {
           cost,
           duration: 0, // Set by caller
           timestamp: new Date().toISOString(),
-          toolsUsed: toolsUsed.length > 0 ? toolsUsed : undefined,
-          toolCallCount: toolCallCount > 0 ? toolCallCount : undefined,
+          // toolsUsed and toolCallCount can be added to pipeline metadata if needed
         },
       };
 

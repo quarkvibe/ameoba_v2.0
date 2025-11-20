@@ -1,6 +1,7 @@
 import { storage } from '../storage';
 import { activityMonitor } from './activityMonitor';
-import { emailService } from './emailService';
+// import { emailService } from './emailService'; // REMOVED - using direct SendGrid
+import sgMail from '@sendgrid/mail';
 import { voiceService } from './voiceService';
 import { smsService } from './smsService';
 import { socialMediaService } from './socialMediaService';
@@ -202,23 +203,35 @@ export class DeliveryService {
       const subject = config.subject || 'Content from Amoeba';
       const from = config.from || emailCredential.fromEmail || 'noreply@amoeba.ai';
 
-      // Send email
-      await emailService.sendEmail(userId, {
-        to: recipients,
-        from,
-        subject,
-        text: content,
-        html: this.formatAsHTML(content),
-      });
-
-      return {
-        success: true,
-        metadata: {
-          recipient: recipients.join(', '),
-          subject,
+      // Send email via SendGrid directly
+      try {
+        // Set API key from credentials
+        sgMail.setApiKey(emailCredential.apiKey || process.env.SENDGRID_API_KEY || '');
+        
+        // Send to all recipients
+        await sgMail.send({
+          to: recipients,
           from,
-        },
-      };
+          subject,
+          text: content,
+          html: this.formatAsHTML(content),
+        });
+        
+        return {
+          success: true,
+          metadata: {
+            recipient: recipients.join(', '),
+            subject,
+            from,
+            provider: emailCredential.provider,
+          },
+        };
+      } catch (emailError: any) {
+        return {
+          success: false,
+          error: emailError.message || 'Email delivery failed',
+        };
+      }
 
     } catch (error: any) {
       return {

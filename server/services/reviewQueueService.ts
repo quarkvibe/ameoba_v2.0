@@ -168,20 +168,21 @@ class ReviewQueueService {
     const content = allContent.find((c: any) => c.id === contentId);
     if (!content) return null;
     
+    const metadata = content.metadata as any || {};
     return {
       id: reviewId,
       contentId: content.id,
-      userId: content.userId,
-      templateId: content.templateId,
-      templateName: content.templateName,
-      status: content.reviewStatus || 'approved',
-      original: content.metadata?.original || content.content,
+      userId: content.userId || '',
+      templateId: content.templateId || '',
+      templateName: metadata.templateName || '',
+      status: metadata.reviewStatus || 'pending',
+      original: metadata.original || content.content,
       processed: content.content,
-      metadata: content.reviewMetadata || {},
-      submittedAt: content.createdAt,
-      reviewedAt: content.reviewedAt,
-      reviewedBy: content.reviewedBy,
-      reviewNotes: content.reviewNotes,
+      metadata: metadata.reviewData || {},
+      submittedAt: content.generatedAt || new Date(),
+      reviewedAt: metadata.reviewedAt,
+      reviewedBy: metadata.reviewedBy,
+      reviewNotes: metadata.reviewNotes,
     };
   }
   
@@ -339,6 +340,11 @@ class ReviewQueueService {
     }
     
     // Get template to find associated output channels
+    if (!content.templateId) {
+      activityMonitor.logActivity('warning', 'No template ID, skipping auto-delivery');
+      return;
+    }
+    
     const template = await storage.getContentTemplate(content.templateId, userId);
     
     if (!template) {
@@ -352,7 +358,7 @@ class ReviewQueueService {
         content: content.content,
         contentId: content.id,
         userId: userId,
-        templateId: content.templateId,
+        templateId: content.templateId || undefined,
       });
       
       activityMonitor.logActivity('success', `📤 Auto-delivered content: ${contentId}`);

@@ -309,6 +309,20 @@ export class DataSourceService {
       };
     }
   }
+
+  /**
+   * Alias for test() - for backwards compatibility
+   */
+  async testDataSource(dataSourceId: string, userId: string) {
+    return this.test(dataSourceId, userId);
+  }
+
+  /**
+   * Alias for fetch() - for backwards compatibility
+   */
+  async fetchData(options: FetchOptions) {
+    return this.fetch(options);
+  }
 }
 
 export const dataSourceService = new DataSourceService();

@@ -5,7 +5,7 @@ import { aiAgent } from './aiAgent';
 import { smsService } from './smsService';
 import { contentGenerationService } from './contentGenerationService';
 import { reviewQueueService } from './reviewQueueService';
-import { testingService } from './testingService';
+// import { testingService } from './testingService'; // REMOVED - bloat
 
 /**
  * SMS Command Service
@@ -196,14 +196,14 @@ class SMSCommandService {
       const response = await aiAgent.chat(userId, text);
       
       // Check if AI wants to execute a command
-      const commandMatch = response.match(/EXECUTE_COMMAND: (.+)/);
+      const commandMatch = response.message.match(/EXECUTE_COMMAND: (.+)/);
       if (commandMatch) {
         const command = commandMatch[1];
         return await this.executeCLICommand(command, userId);
       }
       
       // Format AI response for SMS
-      const smsResponse = this.formatForSMS(response);
+      const smsResponse = this.formatForSMS(response.message);
       
       return {
         success: true,
@@ -508,31 +508,18 @@ Reply "approve all" to approve`,
   }
   
   /**
-   * Handle "test" command
+   * Handle "test" command - Simplified
    */
   private async handleTestCommand(testName: string, userId: string): Promise<SMSCommandResult> {
     try {
-      if (testName === 'all' || testName === '') {
-        // Run all tests
-        const result = await testingService.runAllTests();
-        const summary = testingService.formatForSMS(result);
-        
-        return {
-          success: result.success,
-          response: `🧪 System Tests:\n${summary}\n\nDetails in dashboard`,
-          executed: ['test all'],
-        };
-      } else {
-        // Run specific test or service
-        const result = await testingService.testService(testName);
-        const formatted = testingService.formatForSMS(result);
-        
-        return {
-          success: result.success,
-          response: formatted,
-          executed: [`test ${testName}`],
-        };
-      }
+      // Simple health check
+      const dbHealth = await storage.healthCheck();
+      
+      return {
+        success: dbHealth.healthy,
+        response: `🧪 System Test:\n${dbHealth.healthy ? '✅ Healthy' : '❌ Issues detected'}\n\nDB: ${dbHealth.healthy ? '🟢' : '🔴'}`,
+        executed: ['test'],
+      };
     } catch (error: any) {
       return {
         success: false,
@@ -543,29 +530,28 @@ Reply "approve all" to approve`,
   }
   
   /**
-   * Handle "logs" command
+   * Handle "logs" command - Simplified
    */
   private async handleLogsCommand(params: string, userId: string): Promise<SMSCommandResult> {
     try {
-      // Parse params: "error" or "error 10" or "10"
-      const parts = params.split(/\s+/);
-      const level = ['debug', 'info', 'warning', 'error', 'success'].includes(parts[0]) ? parts[0] as any : undefined;
-      const limit = parseInt(parts[level ? 1 : 0]) || 10;
+      const logs = activityMonitor.getRecentLogs(10);
       
-      const logs = await testingService.readLogs({
-        level,
-        limit: Math.min(limit, 20), // Max 20 for SMS
-      });
+      if (logs.length === 0) {
+        return {
+          success: true,
+          response: `📋 No recent logs. Check dashboard for details.`,
+          executed: ['logs'],
+        };
+      }
       
-      // Format for SMS
-      const formatted = logs.slice(0, 5).map((log: any, i: number) => {
-        const emoji = log.level === 'error' ? '❌' : log.level === 'warning' ? '⚠️' : 'ℹ️';
-        return `${emoji} ${log.message.substring(0, 60)}`;
+      // Format first 3 for SMS
+      const formatted = logs.slice(0, 3).map((log: any) => {
+        return `${log.level}: ${log.message?.substring(0, 40) || 'N/A'}`;
       }).join('\n');
       
       return {
         success: true,
-        response: `📋 Recent Logs${level ? ` (${level})` : ''}:\n${formatted}\n\nFull logs in dashboard`,
+        response: `📋 Recent Activity:\n${formatted}\n\nMore in dashboard`,
         executed: ['logs'],
       };
     } catch (error: any) {

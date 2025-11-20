@@ -394,7 +394,7 @@ class AIToolsService {
         activityMonitor.logActivity('debug', '🎙️ Optimizing content for voice');
         
         // Split into sentences
-        const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        const sentences = content.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
         
         // Limit sentences for voice (attention span)
         const voiceSentences = sentences.slice(0, max_sentences);

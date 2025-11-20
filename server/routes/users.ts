@@ -26,8 +26,9 @@ export function registerUserRoutes(router: Router) {
         res.json({
           id: user.id,
           email: user.email,
-          name: user.name,
-          avatar: user.avatar,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profileImageUrl: user.profileImageUrl,
           createdAt: user.createdAt,
         });
       } catch (error) {
@@ -44,20 +45,26 @@ export function registerUserRoutes(router: Router) {
     async (req: any, res) => {
       try {
         const userId = req.user.claims.sub;
-        const { name, avatar } = req.body;
+        const { firstName, lastName, profileImageUrl } = req.body;
         
         const updatedUser = await storage.updateUser(userId, {
-          name: name || undefined,
-          avatar: avatar || undefined,
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
+          profileImageUrl: profileImageUrl || undefined,
         });
+        
+        if (!updatedUser) {
+          return res.status(404).json({ message: 'User not found' });
+        }
         
         res.json({
           success: true,
           user: {
             id: updatedUser.id,
             email: updatedUser.email,
-            name: updatedUser.name,
-            avatar: updatedUser.avatar,
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            profileImageUrl: updatedUser.profileImageUrl,
           },
         });
       } catch (error) {
@@ -146,18 +153,20 @@ export function registerUserRoutes(router: Router) {
         
         // Gather all user data
         const user = await storage.getUser(userId);
-        const templates = await storage.getContentTemplates(userId, { includeInactive: true });
-        const content = await storage.getGeneratedContent(userId, { limit: 1000 });
-        const dataSources = await storage.getDataSources(userId, { includeInactive: true });
-        const outputs = await storage.getOutputChannels(userId, { includeInactive: true });
-        const schedules = await storage.getScheduledJobs(userId, { includeInactive: true });
+        const templates = await storage.getContentTemplates(userId);
+        const content = await storage.getGeneratedContent(userId, 1000);
+        const dataSources = await storage.getDataSources(userId);
+        const outputs = await storage.getOutputChannels(userId);
+        const schedules = await storage.getScheduledJobs(userId);
         const licenses = await storage.getUserLicenses(userId);
         
         const exportData = {
           user: {
             id: user?.id,
             email: user?.email,
-            name: user?.name,
+            firstName: user?.firstName,
+            lastName: user?.lastName,
+            profileImageUrl: user?.profileImageUrl,
             createdAt: user?.createdAt,
           },
           templates,

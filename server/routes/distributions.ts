@@ -57,10 +57,7 @@ export function registerDistributionRoutes(router: Router) {
         const includeInactive = req.query.includeInactive === 'true';
         const templateId = req.query.templateId as string | undefined;
         
-        const rules = await storage.getDistributionRules(userId, {
-          includeInactive,
-          templateId,
-        });
+        const rules = await storage.getDistributionRules(userId);
         
         res.json({ rules });
       } catch (error) {
@@ -109,7 +106,7 @@ export function registerDistributionRoutes(router: Router) {
         }
         
         // Update rule
-        const updatedRule = await storage.updateDistributionRule(id, req.body);
+        const updatedRule = await storage.updateDistributionRule(id, userId, req.body);
         
         res.json({
           success: true,
@@ -137,7 +134,7 @@ export function registerDistributionRoutes(router: Router) {
           return res.status(404).json({ message: 'Distribution rule not found' });
         }
         
-        await storage.deleteDistributionRule(id);
+        await storage.deleteDistributionRule(id, userId);
         
         res.json({ success: true, message: 'Distribution rule deleted' });
       } catch (error) {
@@ -170,7 +167,7 @@ export function registerDistributionRoutes(router: Router) {
           ruleName: rule.name,
           conditions: rule.conditions,
           wouldMatch: true, // TODO: Actually evaluate conditions
-          targetOutputs: rule.outputChannelIds || [],
+          targetOutputs: rule.channels || [],
           message: 'Rule evaluation simulated successfully',
         });
       } catch (error) {
@@ -203,7 +200,7 @@ export function registerDistributionRoutes(router: Router) {
         
         // Update priorities
         for (let i = 0; i < ruleIds.length; i++) {
-          await storage.updateDistributionRule(ruleIds[i], { priority: i });
+          await storage.updateDistributionRule(ruleIds[i], userId, { priority: i });
         }
         
         res.json({

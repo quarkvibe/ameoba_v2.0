@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Router } from "express";
 import { deploymentIntegrationService } from "../services/deploymentIntegrationService";
 import { generousRateLimit } from "../middleware/rateLimiter";
 
@@ -11,7 +11,8 @@ import { generousRateLimit } from "../middleware/rateLimiter";
  * - Calls deployment service (GOLGI)
  */
 
-export function registerDeploymentRoutes(app: Express) {
+export function registerDeploymentRoutes(router: Router) {
+  const app = router; // Alias for minimal code changes
   const isAuthenticated = (req: any, res: any, next: any) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
       return next();

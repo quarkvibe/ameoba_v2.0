@@ -223,7 +223,7 @@ export default function ContentConfiguration() {
                           id="description"
                           name="description"
                           placeholder="Describe what this template generates"
-                          defaultValue={editingTemplate?.description}
+                          defaultValue={editingTemplate?.description || ''}
                           data-testid="input-template-description"
                         />
                       </div>
@@ -241,16 +241,7 @@ export default function ContentConfiguration() {
                         />
                       </div>
 
-                      <div>
-                        <Label htmlFor="schedule">Cron Schedule</Label>
-                        <Input
-                          id="schedule"
-                          name="schedule"
-                          placeholder="0 0 * * * (daily at midnight)"
-                          defaultValue={editingTemplate?.schedule}
-                          data-testid="input-schedule"
-                        />
-                      </div>
+                      {/* Schedule moved to Scheduled Jobs section */}
 
                       <div className="flex items-center space-x-2">
                         <Switch
@@ -294,10 +285,7 @@ export default function ContentConfiguration() {
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
                           <div className="text-xs text-muted-foreground">
-                            Schedule: <code>{template.schedule}</code>
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Channels: {template.disseminationChannels.join(', ')}
+                            Used: {template.usageCount || 0} times
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -457,7 +445,7 @@ export default function ContentConfiguration() {
                             </Badge>
                             <Badge variant="outline">{source.type}</Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{source.endpoint}</p>
+                          <p className="text-sm text-muted-foreground">Type: {source.type}</p>
                         </div>
                         <Button size="sm" variant="outline">
                           <i className="fas fa-edit"></i>

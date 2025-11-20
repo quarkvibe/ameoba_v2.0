@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Router } from "express";
 import { environmentManagerService } from "../services/environmentManagerService";
 
 /**
@@ -8,7 +8,8 @@ import { environmentManagerService } from "../services/environmentManagerService
  * SECURITY: These are admin-only routes
  */
 
-export function registerEnvironmentRoutes(app: Express) {
+export function registerEnvironmentRoutes(router: Router) {
+  const app = router; // Alias for minimal code changes
   const isAuthenticated = (req: any, res: any, next: any) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
       return next();
@@ -75,10 +76,7 @@ export function registerEnvironmentRoutes(app: Express) {
         userId
       );
       
-      res.json({
-        success: true,
-        ...result,
-      });
+      res.json(result);
     } catch (error: any) {
       res.status(400).json({
         error: error.message,
@@ -99,10 +97,7 @@ export function registerEnvironmentRoutes(app: Express) {
         userId
       );
       
-      res.json({
-        success: true,
-        ...result,
-      });
+      res.json(result);
     } catch (error: any) {
       res.status(400).json({
         error: error.message,
@@ -121,10 +116,7 @@ export function registerEnvironmentRoutes(app: Express) {
       
       const result = await environmentManagerService.bulkUpdate(updates, userId);
       
-      res.json({
-        success: true,
-        ...result,
-      });
+      res.json(result);
     } catch (error: any) {
       res.status(400).json({
         error: error.message,
@@ -163,10 +155,7 @@ export function registerEnvironmentRoutes(app: Express) {
       
       const result = await environmentManagerService.updateEnvFileContent(content, userId);
       
-      res.json({
-        success: true,
-        ...result,
-      });
+      res.json(result);
     } catch (error: any) {
       res.status(400).json({
         error: error.message,

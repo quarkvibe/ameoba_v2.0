@@ -1,21 +1,9 @@
 import {
   users,
-  campaigns,
-  emailLogs,
-  emailConfigurations,
-  queueJobs,
   agentConversations,
   systemConfigurations,
   type User,
   type UpsertUser,
-  type Campaign,
-  type InsertCampaign,
-  type EmailLog,
-  type InsertEmailLog,
-  type EmailConfiguration,
-  type InsertEmailConfiguration,
-  type QueueJob,
-  type InsertQueueJob,
   type AgentConversation,
   type InsertAgentConversation,
   type SystemConfiguration,
@@ -85,30 +73,30 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   
-  // Campaign operations
-  getCampaigns(userId: string): Promise<Campaign[]>;
-  getCampaign(id: string, userId: string): Promise<Campaign | undefined>;
-  createCampaign(campaign: InsertCampaign): Promise<Campaign>;
-  updateCampaign(id: string, userId: string, updates: Partial<InsertCampaign>): Promise<Campaign | undefined>;
-  deleteCampaign(id: string, userId: string): Promise<boolean>;
+  // LEGACY CAMPAIGN OPERATIONS - Commented out
+  // getCampaigns(userId: string): Promise<Campaign[]>;
+  // getCampaign(id: string, userId: string): Promise<Campaign | undefined>;
+  // createCampaign(campaign: InsertCampaign): Promise<Campaign>;
+  // updateCampaign(id: string, userId: string, updates: Partial<InsertCampaign>): Promise<Campaign | undefined>;
+  // deleteCampaign(id: string, userId: string): Promise<boolean>;
   
-  // Email log operations
-  getEmailLogs(userId: string, limit?: number): Promise<EmailLog[]>;
-  createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
-  updateEmailLogStatus(id: string, status: string, metadata?: any): Promise<void>;
-  getEmailMetrics(userId: string, startDate?: Date, endDate?: Date): Promise<any>;
+  // LEGACY EMAIL LOG OPERATIONS - Commented out
+  // getEmailLogs(userId: string, limit?: number): Promise<EmailLog[]>;
+  // createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
+  // updateEmailLogStatus(id: string, status: string, metadata?: any): Promise<void>;
+  // getEmailMetrics(userId: string, startDate?: Date, endDate?: Date): Promise<any>;
   
-  // Email configuration operations
-  getEmailConfigurations(userId: string): Promise<EmailConfiguration[]>;
-  getDefaultEmailConfiguration(userId: string): Promise<EmailConfiguration | undefined>;
-  createEmailConfiguration(config: InsertEmailConfiguration): Promise<EmailConfiguration>;
-  updateEmailConfiguration(id: string, userId: string, updates: Partial<InsertEmailConfiguration>): Promise<EmailConfiguration | undefined>;
+  // LEGACY EMAIL CONFIGURATION OPERATIONS - Commented out (use emailServiceCredentials instead)
+  // getEmailConfigurations(userId: string): Promise<EmailConfiguration[]>;
+  // getDefaultEmailConfiguration(userId: string): Promise<EmailConfiguration | undefined>;
+  // createEmailConfiguration(config: InsertEmailConfiguration): Promise<EmailConfiguration>;
+  // updateEmailConfiguration(id: string, userId: string, updates: Partial<InsertEmailConfiguration>): Promise<EmailConfiguration | undefined>;
   
-  // Queue operations
-  getQueueJobs(status?: string, limit?: number): Promise<QueueJob[]>;
-  createQueueJob(job: InsertQueueJob): Promise<QueueJob>;
-  updateQueueJob(id: string, updates: Partial<QueueJob>): Promise<void>;
-  getQueueMetrics(): Promise<any>;
+  // LEGACY QUEUE OPERATIONS - Commented out
+  // getQueueJobs(status?: string, limit?: number): Promise<QueueJob[]>;
+  // createQueueJob(job: InsertQueueJob): Promise<QueueJob>;
+  // updateQueueJob(id: string, updates: Partial<QueueJob>): Promise<void>;
+  // getQueueMetrics(): Promise<any>;
   
   // Agent operations
   getAgentConversations(userId: string, limit?: number): Promise<AgentConversation[]>;
@@ -273,193 +261,18 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Campaign operations
-  async getCampaigns(userId: string): Promise<Campaign[]> {
-    return await db.select()
-      .from(campaigns)
-      .where(eq(campaigns.userId, userId))
-      .orderBy(desc(campaigns.createdAt));
-  }
-
-  async getCampaign(id: string, userId: string): Promise<Campaign | undefined> {
-    const [campaign] = await db.select()
-      .from(campaigns)
-      .where(and(eq(campaigns.id, id), eq(campaigns.userId, userId)));
-    return campaign;
-  }
-
-  async createCampaign(campaign: InsertCampaign): Promise<Campaign> {
-    const [newCampaign] = await db.insert(campaigns).values(campaign).returning();
-    return newCampaign;
-  }
-
-  async updateCampaign(id: string, userId: string, updates: Partial<InsertCampaign>): Promise<Campaign | undefined> {
-    const [updated] = await db.update(campaigns)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(and(eq(campaigns.id, id), eq(campaigns.userId, userId)))
-      .returning();
-    return updated;
-  }
-
-  async deleteCampaign(id: string, userId: string): Promise<boolean> {
-    const result = await db.delete(campaigns)
-      .where(and(eq(campaigns.id, id), eq(campaigns.userId, userId)));
-    return result.rowCount ? result.rowCount > 0 : false;
-  }
-
-  // Email log operations
-  async getEmailLogs(userId: string, limit = 50): Promise<EmailLog[]> {
-    return await db.select()
-      .from(emailLogs)
-      .where(eq(emailLogs.userId, userId))
-      .orderBy(desc(emailLogs.queuedAt))
-      .limit(limit);
-  }
-
-  async createEmailLog(log: InsertEmailLog): Promise<EmailLog> {
-    const [newLog] = await db.insert(emailLogs).values(log).returning();
-    return newLog;
-  }
-
-  async updateEmailLogStatus(id: string, status: string, metadata?: any): Promise<void> {
-    const updates: any = { status };
-    
-    if (status === 'sent') updates.sentAt = new Date();
-    if (status === 'delivered') updates.deliveredAt = new Date();
-    if (status === 'bounced') updates.bouncedAt = new Date();
-    if (status === 'failed') updates.failedAt = new Date();
-    if (metadata) updates.metadata = metadata;
-
-    await db.update(emailLogs)
-      .set(updates)
-      .where(eq(emailLogs.id, id));
-  }
-
-  async getEmailMetrics(userId: string, startDate?: Date, endDate?: Date): Promise<any> {
-    const whereClause = startDate && endDate 
-      ? and(
-          eq(emailLogs.userId, userId),
-          gte(emailLogs.queuedAt, startDate),
-          lte(emailLogs.queuedAt, endDate)
-        )
-      : eq(emailLogs.userId, userId);
-
-    const [metrics] = await db.select({
-      total: count(),
-      sent: sql<number>`sum(case when status = 'sent' then 1 else 0 end)`,
-      delivered: sql<number>`sum(case when status = 'delivered' then 1 else 0 end)`,
-      bounced: sql<number>`sum(case when status = 'bounced' then 1 else 0 end)`,
-      failed: sql<number>`sum(case when status = 'failed' then 1 else 0 end)`,
-    }).from(emailLogs).where(whereClause);
-
-    return metrics;
-  }
-
-  // Email configuration operations (with encryption)
-  async getEmailConfigurations(userId: string): Promise<EmailConfiguration[]> {
-    const configs = await db.select()
-      .from(emailConfigurations)
-      .where(eq(emailConfigurations.userId, userId))
-      .orderBy(desc(emailConfigurations.isDefault));
-    
-    // Decrypt API keys before returning
-    return configs.map(config => ({
-      ...config,
-      apiKey: encryptionService.decrypt(config.apiKey),
-    }));
-  }
-
-  async getDefaultEmailConfiguration(userId: string): Promise<EmailConfiguration | undefined> {
-    const [config] = await db.select()
-      .from(emailConfigurations)
-      .where(and(
-        eq(emailConfigurations.userId, userId),
-        eq(emailConfigurations.isDefault, true),
-        eq(emailConfigurations.isActive, true)
-      ));
-    
-    if (!config) return undefined;
-    
-    // Decrypt API key before returning
-    return {
-      ...config,
-      apiKey: encryptionService.decrypt(config.apiKey),
-    };
-  }
-
-  async createEmailConfiguration(config: InsertEmailConfiguration): Promise<EmailConfiguration> {
-    // Encrypt API key before storing
-    const encryptedConfig = {
-      ...config,
-      apiKey: encryptionService.encrypt(config.apiKey),
-    };
-    
-    const [newConfig] = await db.insert(emailConfigurations)
-      .values(encryptedConfig)
-      .returning();
-    
-    // Return decrypted version to caller
-    return {
-      ...newConfig,
-      apiKey: encryptionService.decrypt(newConfig.apiKey),
-    };
-  }
-
-  async updateEmailConfiguration(id: string, userId: string, updates: Partial<InsertEmailConfiguration>): Promise<EmailConfiguration | undefined> {
-    // Encrypt API key if it's being updated
-    const encryptedUpdates = {
-      ...updates,
-      ...(updates.apiKey && { apiKey: encryptionService.encrypt(updates.apiKey) }),
-      updatedAt: new Date(),
-    };
-    
-    const [updated] = await db.update(emailConfigurations)
-      .set(encryptedUpdates)
-      .where(and(eq(emailConfigurations.id, id), eq(emailConfigurations.userId, userId)))
-      .returning();
-    
-    if (!updated) return undefined;
-    
-    // Return decrypted version
-    return {
-      ...updated,
-      apiKey: encryptionService.decrypt(updated.apiKey),
-    };
-  }
-
-  // Queue operations
-  async getQueueJobs(status?: string, limit = 100): Promise<QueueJob[]> {
-    const whereClause = status ? eq(queueJobs.status, status) : undefined;
-    
-    return await db.select()
-      .from(queueJobs)
-      .where(whereClause)
-      .orderBy(desc(queueJobs.createdAt))
-      .limit(limit);
-  }
-
-  async createQueueJob(job: InsertQueueJob): Promise<QueueJob> {
-    const [newJob] = await db.insert(queueJobs).values(job).returning();
-    return newJob;
-  }
-
-  async updateQueueJob(id: string, updates: Partial<QueueJob>): Promise<void> {
-    await db.update(queueJobs)
-      .set(updates)
-      .where(eq(queueJobs.id, id));
-  }
-
-  async getQueueMetrics(): Promise<any> {
-    const [metrics] = await db.select({
-      total: count(),
-      pending: sql<number>`sum(case when status = 'pending' then 1 else 0 end)`,
-      processing: sql<number>`sum(case when status = 'processing' then 1 else 0 end)`,
-      completed: sql<number>`sum(case when status = 'completed' then 1 else 0 end)`,
-      failed: sql<number>`sum(case when status = 'failed' then 1 else 0 end)`,
-    }).from(queueJobs);
-
-    return metrics;
-  }
+  // =============================================================================
+  // LEGACY EMAIL CAMPAIGN SYSTEM METHODS - COMMENTED OUT
+  // =============================================================================
+  // Use contentTemplates + scheduledJobs + outputChannels instead
+  // =============================================================================
+  
+  // =============================================================================
+  // LEGACY METHODS REMOVED
+  // =============================================================================
+  // Removed campaign operations, email logs, email configurations, and queue operations.
+  // Amoeba uses: contentTemplates, outputChannels, scheduledJobs, and integrationLogs instead.
+  // =============================================================================
 
   // Agent operations
   async getAgentConversations(userId: string, limit = 20): Promise<AgentConversation[]> {
@@ -1529,6 +1342,143 @@ export class DatabaseStorage implements IStorage {
   async getUserByPhoneNumber(phoneNumber: string): Promise<any[]> {
     // For now, return empty array
     // In future, could add phone field to users table or join with phone credentials
+    return [];
+  }
+  
+  // ===========================================================================
+  // ADDITIONAL MISSING METHODS (STUBS FOR NOW)
+  // ===========================================================================
+  
+  async getApiKeys(): Promise<ApiKey[]> {
+    return await db.select().from(apiKeys);
+  }
+  
+  async getApiKey(id: string): Promise<ApiKey | undefined> {
+    const [key] = await db.select().from(apiKeys).where(eq(apiKeys.id, id)).limit(1);
+    return key;
+  }
+  
+  async updateApiKey(id: string, updates: Partial<ApiKey>): Promise<ApiKey | undefined> {
+    const [updated] = await db.update(apiKeys)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(apiKeys.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async deleteApiKey(id: string): Promise<boolean> {
+    const result = await db.delete(apiKeys).where(eq(apiKeys.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+  
+  async getApiKeyStats(id: string): Promise<any> {
+    // TODO: Implement stats collection
+    return { calls: 0, lastUsed: null };
+  }
+  
+  async rotateApiKey(id: string): Promise<ApiKey | undefined> {
+    // TODO: Implement key rotation
+    return this.getApiKey(id);
+  }
+  
+  async getContentStats(userId: string): Promise<any> {
+    const [result] = await db.select({ count: count() })
+      .from(generatedContent)
+      .where(eq(generatedContent.userId, userId));
+    return { totalGenerated: result?.count || 0 };
+  }
+  
+  async getTemplateStats(id: string): Promise<any> {
+    const [result] = await db.select({ count: count() })
+      .from(generatedContent)
+      .where(eq(generatedContent.templateId, id));
+    return { usageCount: result?.count || 0 };
+  }
+  
+  async updateDataSourceLastFetch(id: string, success: boolean, error?: string): Promise<void> {
+    await this.updateDataSourceFetchStatus(id, new Date(), error || undefined);
+  }
+  
+  async incrementDataSourceErrorCount(id: string): Promise<void> {
+    await db.update(dataSources)
+      .set({ errorCount: sql`${dataSources.errorCount} + 1` })
+      .where(eq(dataSources.id, id));
+  }
+  
+  async linkTemplateDataSource(templateId: string, dataSourceId: string, mapping?: any): Promise<any> {
+    return this.createTemplateDataSource({ templateId, dataSourceId, variableMapping: mapping });
+  }
+  
+  async unlinkTemplateDataSource(templateId: string, dataSourceId: string): Promise<boolean> {
+    return this.deleteTemplateDataSource(templateId, dataSourceId);
+  }
+  
+  async linkTemplateOutputChannel(templateId: string, channelId: string): Promise<any> {
+    return this.createTemplateOutputChannel({ templateId, channelId });
+  }
+  
+  async unlinkTemplateOutputChannel(templateId: string, channelId: string): Promise<boolean> {
+    return this.deleteTemplateOutputChannel(templateId, channelId);
+  }
+  
+  async getDeliveryLogs(userId: string, limit = 50): Promise<any[]> {
+    // TODO: Implement delivery logs table
+    return [];
+  }
+  
+  async getJobExecutionHistory(jobId: string, limit = 50): Promise<any[]> {
+    // TODO: Implement job execution history table
+    return [];
+  }
+  
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async getUserStats(userId: string): Promise<any> {
+    const [contentCount] = await db.select({ count: count() })
+      .from(generatedContent)
+      .where(eq(generatedContent.userId, userId));
+    const [templateCount] = await db.select({ count: count() })
+      .from(contentTemplates)
+      .where(eq(contentTemplates.userId, userId));
+    return {
+      contentGenerated: contentCount?.count || 0,
+      templatesCreated: templateCount?.count || 0,
+    };
+  }
+  
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+  
+  async createAuthProfile(profile: any): Promise<any> {
+    // TODO: Implement auth profiles table
+    return profile;
+  }
+  
+  async getAuthProfile(id: string): Promise<any> {
+    // TODO: Implement auth profiles table
+    return null;
+  }
+  
+  async getAuthProfiles(userId: string): Promise<any[]> {
+    // TODO: Implement auth profiles table
+    return [];
+  }
+  
+  async deleteAuthProfile(id: string): Promise<boolean> {
+    // TODO: Implement auth profiles table
+    return false;
+  }
+  
+  async getSocialMediaCredentials(userId: string): Promise<any[]> {
+    // TODO: Implement social media credentials table
     return [];
   }
 }

@@ -1,9 +1,9 @@
 import { storage } from '../storage';
 import { cronService } from './cronService';
-import { queueService } from './queueService';
+// import { queueService } from './queueService'; // REMOVED - bloat
 import { integrationService } from './integrationService';
 import { activityMonitor } from './activityMonitor';
-import { testingService } from './testingService';
+// import { testingService } from './testingService'; // REMOVED - bloat
 import os from 'os';
 import { db } from '../db';
 
@@ -34,7 +34,7 @@ export class CommandExecutor {
           return await this.listScheduledJobs(userId);
         
         case 'queue':
-          return await this.queueStatus();
+          return '📋 Queue: Using scheduled jobs instead. Try "jobs" command.';
         
         case 'metrics':
         case 'stats':
@@ -77,7 +77,7 @@ export class CommandExecutor {
           return await this.recentLogs(parseInt(args[0]) || 20);
         
         case 'test':
-          return await this.runTests(args[0]);
+          return await this.simpleTest();
         
         case 'diagnostics':
         case 'diag':
@@ -149,7 +149,6 @@ TIP: All operations are logged in real-time
       
       // Check services
       const cronStatus = cronService.getStatus();
-      const queueMetrics = await storage.getQueueMetrics();
       const connectedClients = activityMonitor.getClientCount();
       
       return `
@@ -166,12 +165,6 @@ TIP: All operations are logged in real-time
    Status: ${cronStatus.isRunning ? '✅ Running' : '❌ Stopped'}
    Active Jobs: ${cronStatus.activeJobs}
    Next Execution: ${cronStatus.scheduledJobs[0]?.nextRun || 'None scheduled'}
-
-📦 QUEUE SERVICE:
-   Pending: ${queueMetrics.pending}
-   Processing: ${queueMetrics.processing}
-   Completed: ${queueMetrics.completed}
-   Failed: ${queueMetrics.failed}
 
 🔌 WEBSOCKET:
    Connected Clients: ${connectedClients}
@@ -196,8 +189,8 @@ TIP: All operations are logged in real-time
     const cpu = process.cpuUsage();
     
     try {
-      // Get various metrics
-      const queueMetrics = await storage.getQueueMetrics();
+      // Get content stats
+      const jobs = await storage.getActiveScheduledJobs();
       
       return `
 ╔════════════════════════════════════════════════════════════╗
@@ -218,9 +211,8 @@ TIP: All operations are logged in real-time
    Process: ${this.formatUptime(uptime)}
    System: ${this.formatUptime(os.uptime())}
 
-📊 QUEUE:
-   Total Jobs: ${queueMetrics.pending + queueMetrics.processing + queueMetrics.completed + queueMetrics.failed}
-   Success Rate: ${this.calculateSuccessRate(queueMetrics)}%
+📊 CONTENT:
+   Active Jobs: ${jobs.length}
 
 🔌 WEBSOCKET:
    Active Connections: ${activityMonitor.getClientCount()}
@@ -275,41 +267,10 @@ ${statusIcon} ${job.name}
     }
   }
 
+  // Queue removed - using scheduled jobs instead
+  // This method kept for backwards compatibility but redirects
   private async queueStatus(): Promise<string> {
-    try {
-      const metrics = await storage.getQueueMetrics();
-      const recentJobs = await storage.getQueueJobs(undefined, 10);
-      
-      let output = `
-╔════════════════════════════════════════════════════════════╗
-║                    QUEUE STATUS                            ║
-╚════════════════════════════════════════════════════════════╝
-
-📊 OVERVIEW:
-   Pending: ${metrics.pending}
-   Processing: ${metrics.processing}
-   Completed: ${metrics.completed}
-   Failed: ${metrics.failed}
-   Success Rate: ${this.calculateSuccessRate(metrics)}%
-
-📝 RECENT JOBS:
-`;
-
-      if (recentJobs.length === 0) {
-        output += '   No recent jobs\n';
-      } else {
-        for (const job of recentJobs) {
-          const statusIcon = job.status === 'completed' ? '✅' : job.status === 'failed' ? '❌' : '⏳';
-          output += `   ${statusIcon} ${job.type} - ${job.status} (${job.attempts}/${job.maxAttempts} attempts)\n`;
-        }
-      }
-
-      output += '═══════════════════════════════════════════════════════════';
-      
-      return output.trim();
-    } catch (error: any) {
-      return `❌ Failed to get queue status: ${error.message}`;
-    }
+    return '📋 Queue system removed. Use "jobs" command to see scheduled jobs instead.';
   }
 
   private async listTemplates(userId?: string): Promise<string> {
@@ -751,49 +712,38 @@ TIP: Watch this terminal for live updates
   }
 
   /**
-   * Run system tests
+   * Run system tests - Simplified
    */
-  private async runTests(testName?: string): Promise<string> {
+  private async simpleTest(): Promise<string> {
     try {
-      if (!testName) {
-        // Run all tests
-        const results = await testingService.runAllTests();
-        
-        return `
+      // Simple health check
+      const dbHealth = await storage.healthCheck();
+      
+      return `
 ╔════════════════════════════════════════════════════════════╗
-║                    SYSTEM TEST RESULTS                     ║
+║                    SYSTEM TEST                             ║
 ╚════════════════════════════════════════════════════════════╝
 
-${results.success ? '✅' : '❌'} Overall: ${results.passed}/${results.passed + results.failed} tests passed
+${dbHealth.healthy ? '✅' : '❌'} Database: ${dbHealth.healthy ? 'Connected' : 'Failed'}
+   Message: ${dbHealth.message}
 
-Duration: ${results.duration}ms
-Status: ${results.success ? 'ALL PASSED ✅' : 'SOME FAILED ❌'}
+Overall Status: ${dbHealth.healthy ? '✅ HEALTHY' : '❌ ISSUES DETECTED'}
 
-Run 'test <suite>' for specific tests
-Available suites: database, ai_providers, delivery, tools, integration
-`;
-      } else {
-        // Run specific test or suite
-        const result = await testingService.testService(testName);
-        
-        return `
-🧪 Test: ${testName}
-${result.success ? '✅' : '❌'} Result: ${result.message}
-Duration: ${result.duration}ms
-${result.error ? `Error: ${result.error}` : ''}
-`;
-      }
+For comprehensive testing, use standard test tools.
+═══════════════════════════════════════════════════════════
+      `.trim();
     } catch (error: any) {
-      return `❌ Test execution failed: ${error.message}`;
+      return `❌ Test failed: ${error.message}`;
     }
   }
   
   /**
-   * System diagnostics
+   * System diagnostics - Simplified
    */
   private async systemDiagnostics(): Promise<string> {
     try {
-      const diag = await testingService.getDiagnostics();
+      const mem = process.memoryUsage();
+      const dbHealth = await storage.healthCheck();
       
       return `
 ╔════════════════════════════════════════════════════════════╗
@@ -801,24 +751,22 @@ ${result.error ? `Error: ${result.error}` : ''}
 ╚════════════════════════════════════════════════════════════╝
 
 🖥️  SYSTEM:
-  Uptime: ${Math.floor(diag.system.uptime / 60)} minutes
-  Memory: ${Math.round(diag.system.memory.heapUsed / 1024 / 1024)}MB / ${Math.round(diag.system.memory.heapTotal / 1024 / 1024)}MB
-  Platform: ${diag.system.platform}
-  Node: ${diag.system.version}
+  Uptime: ${Math.floor(process.uptime() / 60)} minutes
+  Memory: ${Math.round(mem.heapUsed / 1024 / 1024)}MB / ${Math.round(mem.heapTotal / 1024 / 1024)}MB
+  Platform: ${os.platform()} ${os.release()}
+  Node: ${process.version}
 
 🗄️  DATABASE:
-  Status: ${diag.database.connected ? '✅ Connected' : '❌ Disconnected'}
-
-🔌 SERVICES:
-  AI: ${diag.services.ai ? '✅' : '❌'} Configured
-  Email: ${diag.services.email ? '✅' : '❌'} Configured
-  SMS: ${diag.services.sms ? '✅' : '❌'} Configured
-  Voice: ${diag.services.voice ? '✅' : '❌'} Configured
+  Status: ${dbHealth.healthy ? '✅ Connected' : '❌ Disconnected'}
+  Message: ${dbHealth.message}
 
 ⚙️  ENVIRONMENT:
-  Mode: ${diag.environment.nodeEnv || 'development'}
-  Port: ${diag.environment.port || '5000'}
-`;
+  Mode: ${process.env.NODE_ENV || 'development'}
+  Port: ${process.env.PORT || '5000'}
+  Cron: ${process.env.ENABLE_CRON !== 'false' ? '✅ Enabled' : '❌ Disabled'}
+
+═══════════════════════════════════════════════════════════
+      `.trim();
     } catch (error: any) {
       return `❌ Diagnostics failed: ${error.message}`;
     }

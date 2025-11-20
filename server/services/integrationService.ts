@@ -254,6 +254,42 @@ export class IntegrationService {
   async getWebhooks(): Promise<Webhook[]> {
     return storage.getActiveWebhooks();
   }
+
+  /**
+   * Update an API key
+   */
+  async updateApiKey(id: string, updates: Partial<ApiKey>): Promise<ApiKey | undefined> {
+    return storage.updateApiKey(id, updates);
+  }
+
+  /**
+   * Get API key statistics
+   */
+  async getApiKeyStats(id: string): Promise<any> {
+    return storage.getApiKeyStats(id);
+  }
+
+  /**
+   * Rotate an API key (generates new key, invalidates old one)
+   */
+  async rotateApiKey(id: string): Promise<{ key: string; apiKey: ApiKey }> {
+    const oldKey = await storage.getApiKey(id);
+    if (!oldKey) {
+      throw new Error('API key not found');
+    }
+    
+    // Generate new key
+    const key = `amoeba_${crypto.randomBytes(32).toString('hex')}`;
+    const keyHash = crypto.createHash('sha256').update(key).digest('hex');
+    
+    // Update the key hash
+    const apiKey = await storage.updateApiKey(id, { keyHash });
+    if (!apiKey) {
+      throw new Error('Failed to rotate API key');
+    }
+    
+    return { key, apiKey };
+  }
 }
 
 export const integrationService = new IntegrationService();

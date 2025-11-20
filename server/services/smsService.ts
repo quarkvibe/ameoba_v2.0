@@ -218,7 +218,7 @@ class SMSService {
   /**
    * Validate phone number format (E.164)
    */
-  private validatePhoneNumber(phoneNumber: string): { valid: boolean; formatted?: string; error?: string } {
+  public validatePhoneNumber(phoneNumber: string): { valid: boolean; formatted?: string; error?: string } {
     // E.164 format: +[country code][number]
     const e164Regex = /^\+[1-9]\d{1,14}$/;
     

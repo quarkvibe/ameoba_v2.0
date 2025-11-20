@@ -58,10 +58,7 @@ export function registerDataSourceRoutes(router: Router) {
         const type = req.query.type as string | undefined;
         const includeInactive = req.query.includeInactive === 'true';
         
-        const dataSources = await storage.getDataSources(userId, {
-          type,
-          includeInactive,
-        });
+        const dataSources = await storage.getDataSources(userId);
         
         res.json({ dataSources });
       } catch (error) {
@@ -110,7 +107,7 @@ export function registerDataSourceRoutes(router: Router) {
         }
         
         // Update data source
-        const updatedDataSource = await storage.updateDataSource(id, req.body);
+        const updatedDataSource = await storage.updateDataSource(id, userId, req.body);
         
         res.json({
           success: true,
@@ -138,7 +135,7 @@ export function registerDataSourceRoutes(router: Router) {
           return res.status(404).json({ message: 'Data source not found' });
         }
         
-        await storage.deleteDataSource(id);
+        await storage.deleteDataSource(id, userId);
         
         res.json({ success: true, message: 'Data source deleted' });
       } catch (error) {
@@ -163,7 +160,7 @@ export function registerDataSourceRoutes(router: Router) {
         }
         
         // Test data source
-        const result = await dataSourceService.testDataSource(dataSource);
+        const result = await dataSourceService.testDataSource(id, userId);
         
         res.json({
           success: result.success,
@@ -185,20 +182,20 @@ export function registerDataSourceRoutes(router: Router) {
     isAuthenticated, 
     strictRateLimit,
     async (req: any, res) => {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      
       try {
-        const userId = req.user.claims.sub;
-        const { id } = req.params;
-        
         const dataSource = await storage.getDataSource(id, userId);
         if (!dataSource) {
           return res.status(404).json({ message: 'Data source not found' });
         }
         
         // Fetch data
-        const data = await dataSourceService.fetchData(dataSource);
+        const data = await dataSourceService.fetchData({ dataSourceId: id, userId });
         
-        // Update last fetch time
-        await storage.updateDataSourceLastFetch(id, new Date());
+        // Update last fetch time (success)
+        await storage.updateDataSourceLastFetch(id, true);
         
         res.json({
           success: true,
@@ -209,7 +206,11 @@ export function registerDataSourceRoutes(router: Router) {
         console.error('Error fetching data:', error);
         
         // Update error count
-        await storage.incrementDataSourceErrorCount(id);
+        try {
+          await storage.incrementDataSourceErrorCount(id);
+        } catch (e) {
+          // Ignore error count update failure
+        }
         
         res.status(500).json({ 
           success: false,

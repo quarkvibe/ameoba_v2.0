@@ -1,383 +1,265 @@
-# 🦠 AMOEBA: The Universal Application Assembler
+# 🦠 Amoeba Vision
 
-**Version:** 2.0  
-**Status:** Production Ready  
-**Philosophy:** Self-evolving organism that adapts to any use case
+**AI content generation platform with built-in AI assistant.**
 
 ---
 
-## 🎯 Core Vision
+## 🎯 What Amoeba Is
 
-**Amoeba is not a tool. It's a living system.**
+### Simple Definition
+An AI platform that generates content, delivers it via multiple channels, and can be extended by asking the AI to add features.
 
-Like its biological namesake, Amoeba is:
-- **Adaptable** - Takes any form required by the user
-- **Self-sufficient** - Runs independently with minimal resources
-- **Self-modifying** - Evolves based on user needs
-- **Simple** - Complex capabilities from simple components
-- **Resilient** - Survives and thrives in any environment
+### Core Purpose
+1. **Generate** content with AI (OpenAI, Anthropic, Ollama)
+2. **Fetch** data from sources (RSS, APIs, websites)
+3. **Deliver** via email, SMS, voice, webhooks, social media
+4. **Automate** with scheduling (cron)
+5. **Review** before delivery (optional human approval)
+6. **Control** via SMS, dashboard, CLI, or API
+
+### The Unique Feature
+**Built-in AI assistant** that can extend Amoeba itself (with your approval).
+
+```
+User: "Add Discord integration"
+AI Assistant: Generates code, shows diff, waits for approval
+User: Approves
+AI Assistant: Applied! Discord integration ready.
+```
+
+Like having **Cursor/Claude Code built into your platform**.
 
 ---
 
-## 🧬 What Amoeba Assembles
+## 💡 Why Amoeba Exists
 
-Amoeba is the **universal application assembler** - it can become ANY application that:
-1. Consumes data from sources
-2. Transforms data with AI
-3. Delivers output to destinations
+### The Problem
+**Other AI platforms:**
+- ❌ Expensive subscription fees
+- ❌ Usage-based pricing surprises
+- ❌ Vendor lock-in
+- ❌ Data privacy concerns
+- ❌ Limited customization
+- ❌ Can't modify the platform
 
-### Example Applications (Not Exhaustive)
+### The Amoeba Solution
+- ✅ Self-hosted (your server, your data)
+- ✅ BYOK (your API keys, your costs)
+- ✅ Open source (MIT license)
+- ✅ Fully customizable
+- ✅ AI can extend it (with your approval)
+- ✅ SMS control (unique!)
 
-**Content Applications:**
-- Newsletter generators
-- Blog post writers
-- Social media managers
-- Documentation generators
-- Report creators
-- Email campaign builders
-
-**Data Applications:**
-- News aggregators
-- Market analysis tools
-- Research summarizers
-- Trend monitors
-- Competitive intelligence
-- Alert systems
-
-**Automation Applications:**
-- Customer support bots
-- Lead qualification systems
-- Content moderation
-- Data enrichment pipelines
-- Workflow orchestrators
-- Integration hubs
-
-**Creative Applications:**
-- Story generators
-- Marketing copy writers
-- Product description creators
-- SEO content optimizers
-- Translation services
-- Content repurposing engines
-
-### The Pattern
-
-Every application follows the same pattern:
-```
-INPUT → TRANSFORM → OUTPUT
-  ↓         ↓          ↓
-Data     AI Agent   Delivery
-Source   Processing  Channel
-```
-
-Amoeba provides the **universal substrate** for this pattern.
-
----
-
-## 🔮 The Self-Modifying Vision
-
-### Phase 1: Configuration via Natural Language ✅
-**Status:** Implemented (`aiConfigurationAssistant.ts`)
-
-Users say what they want, Amoeba configures itself:
-```
-User: "Create a daily tech news summary from Hacker News"
-Amoeba: → Creates template
-        → Creates data source
-        → Creates schedule
-        → Returns working application
-```
-
-### Phase 2: Template Intelligence (Week 3-4)
-**Status:** Designed, ready to build
-
-Amoeba learns optimal patterns:
-```
-User: "Generate a template for Twitter threads"
-Amoeba: → Analyzes successful threads
-        → Generates optimized template
-        → Configures AI parameters
-        → Provides best practices
-```
-
-### Phase 3: Code Modification (Week 5-8)
-**Status:** Architecture complete, implementation planned
-
-Users extend Amoeba's capabilities via text:
-```
-User: "Add Discord webhook support"
-Amoeba: → Generates new service file
-        → Updates delivery system
-        → Creates tests
-        → Requests approval
-        → Applies changes
-        → Commits to Git
-```
-
-**The Result:** Amoeba modifies its own code to add new capabilities.
-
-### Phase 4: Self-Evolution (Ongoing)
-**Status:** Long-term vision
-
-Amoeba learns from usage:
-- Identifies optimization opportunities
-- Suggests architectural improvements
-- Refactors code automatically
-- Proposes new features
-- Manages its own evolution
-
-**The Ultimate Form:** A platform that improves itself faster than humans can.
-
----
-
-## 🧪 Why "Amoeba"?
-
-The name is deliberate and meaningful:
-
-**Biological Amoeba:**
-- Single-celled organism
-- Changes shape constantly
-- Adapts to environment
-- Self-sufficient
-- Resilient
-- Simple yet powerful
-
-**Digital Amoeba:**
-- Single-purpose core (content generation)
-- Changes form constantly (any application)
-- Adapts to user needs
-- Self-hosted
-- Resilient architecture
-- Simple principles, powerful capabilities
-
-**The Metaphor:**
-```
-Cell Membrane    → API Layer (protection, filtering)
-Nucleus          → Core Engine (business logic)
-Mitochondria     → Database (energy/data)
-Ribosomes        → Routes (request handling)
-Golgi Apparatus  → Services (processing)
-Cilia            → Integrations (external interaction)
-DNA              → MANIFESTO.md (immutable principles)
-```
+### The Result
+**Complete control. No surprises. Fair pricing.**
 
 ---
 
 ## 🎨 Design Philosophy
 
-### 1. The Folding Knife Principle
-**"Cohesion like a folding knife"** - every component folds perfectly into the whole.
+### 1. Simplicity First
+- Clear, understandable code
+- Standard patterns
+- No over-engineering
+- Easy to maintain
 
-Like a quality knife:
-- Each part serves one purpose excellently
-- All parts fit together seamlessly
-- The whole is greater than the sum
-- Beautiful in simplicity
-- Reliable under pressure
+### 2. User Control Always
+- Self-hosted
+- BYOK for everything
+- Review and approve changes
+- No autonomous behavior
 
-### 2. Token Economics
-**"Tokens as the universal input"**
+### 3. Multiple Access Methods
+- Dashboard for visual users
+- CLI for developers
+- SMS for mobile control
+- API for integrations
 
-Everything costs tokens:
-- AI generation: tokens
-- Self-modification: tokens
-- Learning: tokens
-- Evolution: tokens
+All interfaces are equally powerful.
 
-Users control costs completely (BYOK = Bring Your Own Keys).
-
-### 3. Evolutionary Pressure
-**"Apps evolve like organisms"**
-
-Natural selection applies:
-- Inefficient patterns are replaced
-- Successful patterns propagate
-- System optimizes over time
-- Best practices emerge organically
-
-### 4. Universal Substrate
-**"One platform, infinite forms"**
-
-Amoeba is not:
-- A newsletter tool
-- A blog generator
-- A chatbot builder
-
-Amoeba IS:
-- The substrate for building ANY of these
-- The platform that adapts to user needs
-- The organism that takes required form
+### 4. Cost Transparency
+- You pay providers directly
+- No middleman fees
+- No usage surprises
+- Complete cost control
 
 ---
 
-## 🚀 The Competitive Advantage
+## 🚀 Use Cases
 
-### vs. Zapier/Make/n8n
-**Problem:** Pre-built connectors, limited flexibility, vendor lock-in
-
-**Amoeba:** Universal substrate, infinite flexibility, self-hosted
-
-### vs. Custom Code
-**Problem:** Time-consuming, requires developers, hard to maintain
-
-**Amoeba:** Natural language config, AI-assisted, self-maintaining
-
-### vs. Traditional Platforms
-**Problem:** Subscription treadmill, data lock-in, privacy concerns
-
-**Amoeba:** One-time license, data sovereignty, complete transparency
-
-### The Unique Position
-Amoeba is the only platform that:
-1. ✅ Self-hosts (data sovereignty)
-2. ✅ BYOK (cost control)
-3. ✅ Self-modifies (adaptability)
-4. ✅ Open source (transparency)
-5. ✅ $3.50 lifetime (fair economics)
-
----
-
-## 📊 Use Cases by Industry
-
-### SaaS Companies
-- Customer onboarding content
-- Feature announcement generators
-- Documentation automation
-- Support content creation
-- Marketing copy generation
-
-### E-commerce
-- Product descriptions
-- SEO content
-- Email campaigns
-- Customer communications
-- Market analysis
-
-### Media & Publishing
-- News aggregation
-- Content curation
-- Newsletter automation
-- Social media management
-- Trend analysis
-
-### Agencies
-- Client reporting
-- Content production
-- Campaign management
-- Multi-client workflows
-- White-label solutions
+### Content Teams
+- Daily/weekly content generation
+- Multi-channel distribution
+- Quality review workflow
+- Template library
 
 ### Developers
-- Documentation generation
-- Code explanation
-- API documentation
-- Release notes
-- Tutorial creation
+- Embed in applications
+- CI/CD integration
+- API-first design
+- Extend with AI assistance
 
-### Finance
-- Market analysis
-- Report generation
-- Compliance monitoring
-- Risk assessment
-- Investment research
+### Agencies
+- Multi-client management
+- White-label ready
+- Quality control
+- Cost per client
 
-**The Pattern:** Any industry that needs content generation, data transformation, or workflow automation.
+### Businesses
+- Marketing automation
+- Customer communications
+- Internal reporting
+- Compliance-ready
+
+---
+
+## 🏆 Competitive Advantage
+
+### vs Zapier/Make/n8n
+**They**: Pre-built connectors, subscription fees, limited AI  
+**Amoeba**: AI-powered, fully customizable, self-hosted, AI can extend itself
+
+### vs Building Custom
+**Custom**: Takes months, requires devs, hard to maintain  
+**Amoeba**: Works immediately, AI helps extend it, easy to maintain
+
+### vs Other AI Platforms
+**They**: Black box, expensive, vendor lock-in  
+**Amoeba**: Open source, BYOK, self-hosted, extensible
+
+**Unique Position**: The only platform where the AI can extend the platform itself (with your approval).
+
+---
+
+## 🗺️ Roadmap
+
+### ✅ Phase 1: Foundation (COMPLETE)
+- Multi-provider AI generation
+- Multi-channel delivery (6+ channels)
+- SMS command interface
+- Quality pipeline & review workflow
+- BYOK credentials
+- Universal storage (SQLite + PostgreSQL)
+- CLI (60+ commands)
+- Licensing system
+- Web monitoring
+- Social media posting
+
+### 🔄 Phase 2: Polish (Current)
+- Clean up TypeScript errors
+- Simplify architecture
+- Enhance AI agent console
+- Add code modification capabilities
+- Performance optimization
+- Production deployment
+
+### 📅 Phase 3: Enhancement (Month 2)
+- Template marketplace
+- More delivery channels (Discord, Slack, Teams)
+- Plugin system (simple)
+- Community templates
+- Advanced analytics
+- Multi-instance support
+
+### 🔮 Phase 4: Ecosystem (Month 3+)
+- Community marketplace
+- Template sharing
+- Revenue sharing (70/30 split)
+- Developer certification
+- Enterprise features
+
+---
+
+## 💡 Key Principles
+
+### 1. Simplicity Over Complexity
+Build only what's needed. Remove what isn't.
+
+### 2. User Control Over Autonomy
+Users control everything. No surprises. No autonomous behavior.
+
+### 3. Open Over Closed
+Open source. Open architecture. Open to contributions.
+
+### 4. Fair Over Extractive
+Fair pricing. No middleman fees. Your data, your costs.
+
+### 5. Practical Over Theoretical
+Features that users actually need. Not academic exercises.
 
 ---
 
 ## 🎯 Success Metrics
 
 ### For Users
-- **Setup time:** < 5 minutes
-- **First workflow:** < 10 minutes
-- **Cost per generation:** $0.001-0.05 (vs $0.50+ on platforms)
-- **Customization:** Unlimited
-- **Data ownership:** 100%
+- Setup time: < 5 minutes
+- First generation: < 10 minutes
+- Cost per generation: $0.001-0.01 (vs $0.50+ on platforms)
+- Data ownership: 100%
+- Customization: Unlimited
 
 ### For the Platform
-- **Response time:** < 100ms (p95)
-- **Uptime:** > 99.9%
-- **Test coverage:** > 80%
-- **Documentation coverage:** 100%
-- **Security:** Zero known vulnerabilities
+- TypeScript errors: 0 (goal)
+- Test coverage: > 80% (goal)
+- Build time: < 30 seconds
+- Response time: < 100ms (p95)
+- Uptime: > 99.9%
 
 ### For the Ecosystem
-- **Contributors:** Growing monthly
-- **Plugins:** Community-driven marketplace
-- **Templates:** Shared library
-- **Deployments:** Thousands globally
-- **Evolution rate:** Weekly improvements
+- Contributors: Growing
+- Templates: Community library
+- Plugins: Marketplace
+- Deployments: Thousands globally
 
 ---
 
-## 🔮 The Future
+## 🌟 The Vision (Long-term)
 
-### Year 1: Foundation
-- ✅ Core platform launch
-- ✅ AI Configuration Assistant
-- 📅 Visual workflow builder
-- 📅 Plugin marketplace
+### Year 1: Solid Foundation
+- ✅ Core platform stable
 - 📅 1,000+ users
+- 📅 Template marketplace
+- 📅 Community contributions
 
-### Year 2: Intelligence
-- 📅 Self-modifying code agent
+### Year 2: AI Enhancement
+- 📅 AI assistant that extends Amoeba
 - 📅 Learning from usage patterns
-- 📅 Automated optimization
+- 📅 Automated optimization suggestions
 - 📅 10,000+ users
-- 📅 Community ecosystem
 
-### Year 3: Evolution
-- 📅 Platform suggests improvements
-- 📅 Autonomous feature development
-- 📅 Cross-platform learning
+### Year 3: Ecosystem
+- 📅 Plugin marketplace
+- 📅 Revenue sharing for creators
+- 📅 Multi-language support
 - 📅 100,000+ users
-- 📅 Industry standard
 
 ### The Ultimate Goal
-**Amoeba becomes the first truly self-evolving software platform.**
+**The easiest way to generate and deliver AI content, with complete control.**
 
-A system that:
-- Understands user needs
-- Generates required features
-- Tests and validates changes
-- Deploys improvements
-- Learns from results
-- Repeats infinitely
-
-**Not a tool. Not an app. A living system.** 🦠
+Not the most complex. Not the most features. **The simplest that actually works.**
 
 ---
 
-## 🌟 The Promise
+## 🎉 Why "Amoeba"?
 
-**To Users:**
-- You own your data
-- You control your costs
-- You customize infinitely
-- You evolve with the platform
+The name represents adaptability:
+- **Biological amoeba**: Single-celled, simple, adaptable, resilient
+- **Digital Amoeba**: Simple platform, adapts to any use case, easy to extend
 
-**To Contributors:**
-- Fair recognition
-- Revenue sharing
-- Voice in direction
-- Growing ecosystem
-
-**To the Industry:**
-- Proof that open source works
-- Model for fair economics
-- Example of good architecture
-- Platform for innovation
-
-**To the Future:**
-- Self-evolving software is possible
-- AI can improve software safely
-- Community beats corporation
-- Simplicity wins over complexity
+**Not** about biological metaphors or complexity.  
+**Yes** about simplicity and adaptability.
 
 ---
 
-**Amoeba: The Universal Application Assembler**
+## 📞 Contact
 
-*From single-celled simplicity to infinite complexity.*  
-*One platform. Infinite forms.* 🦠
+- **Issues**: [GitHub Issues](https://github.com/quarkvibe/Ameoba_1.2/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/quarkvibe/Ameoba_1.2/discussions)
+- **Email**: support@quarkvibe.com
+- **Website**: https://ameoba.org
 
+---
+
+**Amoeba: Simple AI content generation. Your way.**
+
+🦠

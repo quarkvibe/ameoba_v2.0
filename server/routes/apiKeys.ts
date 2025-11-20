@@ -75,7 +75,7 @@ export function registerApiKeyRoutes(router: Router) {
           }
         }
         
-        const result = await integrationService.generateApiKey(name, permissions, expiresIn);
+        const result = await integrationService.generateApiKey(name, permissions);
         
         res.json({
           message: 'API key generated successfully. Store it securely - it will not be shown again.',
@@ -108,6 +108,10 @@ export function registerApiKeyRoutes(router: Router) {
           permissions,
           isActive,
         });
+        
+        if (!updatedKey) {
+          return res.status(404).json({ message: 'API key not found' });
+        }
         
         res.json({
           success: true,

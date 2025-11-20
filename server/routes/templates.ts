@@ -57,10 +57,7 @@ export function registerTemplateRoutes(router: Router) {
         const includeInactive = req.query.includeInactive === 'true';
         const category = req.query.category as string | undefined;
         
-        const templates = await storage.getContentTemplates(userId, {
-          includeInactive,
-          category,
-        });
+        const templates = await storage.getContentTemplates(userId);
         
         res.json({ templates });
       } catch (error) {
@@ -109,7 +106,7 @@ export function registerTemplateRoutes(router: Router) {
         }
         
         // Update template
-        const updatedTemplate = await storage.updateContentTemplate(id, req.body);
+        const updatedTemplate = await storage.updateContentTemplate(id, userId, req.body);
         
         res.json({
           success: true,
@@ -137,7 +134,7 @@ export function registerTemplateRoutes(router: Router) {
           return res.status(404).json({ message: 'Template not found' });
         }
         
-        await storage.deleteContentTemplate(id);
+        await storage.deleteContentTemplate(id, userId);
         
         res.json({ success: true, message: 'Template deleted' });
       } catch (error) {
@@ -171,8 +168,8 @@ export function registerTemplateRoutes(router: Router) {
           aiPrompt: original.aiPrompt,
           systemPrompt: original.systemPrompt,
           outputFormat: original.outputFormat,
-          variables: original.variables,
-          settings: original.settings,
+          variables: original.variables as any, // Cast from unknown to Json
+          settings: original.settings as any, // Cast from unknown to Json
           isActive: false, // Duplicates start inactive
           isPublic: false,
         });

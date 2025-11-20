@@ -125,11 +125,7 @@ export function registerContentRoutes(router: Router) {
         const offset = parseInt(req.query.offset as string) || 0;
         const templateId = req.query.templateId as string | undefined;
         
-        const content = await storage.getGeneratedContent(userId, { 
-          limit, 
-          offset, 
-          templateId 
-        });
+        const content = await storage.getGeneratedContent(userId, limit);
         
         res.json({
           content,
@@ -161,7 +157,7 @@ export function registerContentRoutes(router: Router) {
           return res.status(404).json({ message: 'Content not found' });
         }
         
-        await storage.deleteGeneratedContent(id);
+        await storage.deleteGeneratedContent(id, userId);
         
         res.json({ success: true, message: 'Content deleted' });
       } catch (error) {

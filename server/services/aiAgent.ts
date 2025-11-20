@@ -211,39 +211,23 @@ Always be helpful, proactive, and execute commands when appropriate.`;
 
   async analyzeEmailPerformance(userId: string, timeframe: 'day' | 'week' | 'month' = 'day'): Promise<AgentResponse> {
     try {
-      const endDate = new Date();
-      const startDate = new Date();
+      // Get content generation stats instead of email campaigns
+      const templates = await storage.getContentTemplates(userId);
+      const recentContent = await storage.getGeneratedContent(userId, 50);
+      const jobs = await storage.getScheduledJobs(userId);
       
-      switch (timeframe) {
-        case 'day':
-          startDate.setDate(startDate.getDate() - 1);
-          break;
-        case 'week':
-          startDate.setDate(startDate.getDate() - 7);
-          break;
-        case 'month':
-          startDate.setMonth(startDate.getMonth() - 1);
-          break;
-      }
-
-      const metrics = await storage.getEmailMetrics(userId, startDate, endDate);
-      const campaigns = await storage.getCampaigns(userId);
-      
-      const analysisPrompt = `Analyze this email performance data for the last ${timeframe}:
+      const analysisPrompt = `Analyze this content generation performance for the last ${timeframe}:
 
 Metrics:
-- Total emails: ${metrics.total}
-- Sent: ${metrics.sent}
-- Delivered: ${metrics.delivered}
-- Bounced: ${metrics.bounced}
-- Failed: ${metrics.failed}
-
-Active campaigns: ${campaigns.length}
+- Total templates: ${templates.length}
+- Active templates: ${templates.filter(t => t.isActive).length}
+- Generated content: ${recentContent.length} items
+- Scheduled jobs: ${jobs.length} (${jobs.filter(j => j.isActive).length} active)
 
 Provide insights, identify issues, and suggest optimizations. Format as JSON with 'message', 'actions', and 'suggestions'.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-5",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: this.systemPrompt },
           { role: "user", content: analysisPrompt }
@@ -255,7 +239,7 @@ Provide insights, identify issues, and suggest optimizations. Format as JSON wit
     } catch (error) {
       console.error('Performance analysis error:', error);
       return {
-        message: 'Unable to analyze email performance at this time.',
+        message: 'Unable to analyze performance at this time.',
         suggestions: [],
       };
     }
@@ -263,30 +247,36 @@ Provide insights, identify issues, and suggest optimizations. Format as JSON wit
 
   async suggestOptimizations(userId: string): Promise<string[]> {
     try {
-      const metrics = await storage.getEmailMetrics(userId);
-      const campaigns = await storage.getCampaigns(userId);
-      const recentLogs = await storage.getEmailLogs(userId, 100);
-
-      const deliveryRate = metrics.total > 0 ? (metrics.delivered / metrics.total) * 100 : 0;
-      const bounceRate = metrics.total > 0 ? (metrics.bounced / metrics.total) * 100 : 0;
+      const templates = await storage.getContentTemplates(userId);
+      const recentContent = await storage.getGeneratedContent(userId, 100);
+      const jobs = await storage.getScheduledJobs(userId);
 
       const suggestions: string[] = [];
 
-      if (deliveryRate < 95) {
-        suggestions.push("Delivery rate is below optimal. Consider reviewing your email list hygiene and sender reputation.");
+      if (templates.length === 0) {
+        suggestions.push("No templates found. Create your first content template to start generating.");
       }
 
-      if (bounceRate > 5) {
-        suggestions.push("High bounce rate detected. Implement email validation and list cleaning procedures.");
+      const activeTemplates = templates.filter(t => t.isActive);
+      if (activeTemplates.length === 0 && templates.length > 0) {
+        suggestions.push("All templates are inactive. Activate templates to start generating content.");
       }
 
-      if (campaigns.length === 0) {
-        suggestions.push("No active campaigns found. Consider setting up automated email sequences.");
+      if (jobs.length === 0) {
+        suggestions.push("No scheduled jobs found. Consider automating content generation with cron schedules.");
       }
 
-      const activeCampaigns = campaigns.filter(c => c.status === 'active');
-      if (activeCampaigns.length > 10) {
-        suggestions.push("Many active campaigns detected. Consider consolidating or scheduling to avoid overwhelming recipients.");
+      const activeJobs = jobs.filter(j => j.isActive);
+      if (activeJobs.length === 0 && jobs.length > 0) {
+        suggestions.push("All jobs are inactive. Activate jobs to enable automated generation.");
+      }
+
+      if (recentContent.length === 0) {
+        suggestions.push("No content generated yet. Try generating from one of your templates.");
+      }
+
+      if (suggestions.length === 0) {
+        suggestions.push("System looks good! Content generation is active and working well.");
       }
 
       return suggestions;
@@ -340,6 +330,13 @@ Provide insights, identify issues, and suggest optimizations. Format as JSON wit
         error: error.message || 'Failed to connect to OpenAI API',
       };
     }
+  }
+
+  /**
+   * Alias for processMessage - for backwards compatibility
+   */
+  async chat(userId: string, message: string, context?: AgentContext): Promise<AgentResponse> {
+    return this.processMessage(userId, message, context);
   }
 }
 
